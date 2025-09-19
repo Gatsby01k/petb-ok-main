@@ -1,0 +1,35 @@
+
+  const [submitting, setSubmitting] = React.useState(false);
+  const onSubmitApply: React.FormEventHandler<HTMLFormElement> = async (e) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const payload = {
+      fullName: String(fd.get("fullName") || fd.get("name") || "").trim(),
+      email: String(fd.get("email") || fd.get("mail") || "").trim(),
+      tier: String(fd.get("tier") || "").trim(),
+      amount: String(fd.get("amount") || "").trim(),
+      message: String(fd.get("message") || "").trim(),
+      consent: fd.get("consent") ? "on" : "",
+      hp: String(fd.get("website") || "")
+    };
+    try {
+      setSubmitting(true);
+      const res = await fetch("/api/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || (j && j.ok === false)) {
+        const details = j?.missing ? ` (${j.missing.join(", ")})` : "";
+        throw new Error((j?.error || res.statusText) + details);
+      }
+      alert("Application sent. We'll contact you soon.");
+      form.reset();
+    } catch (err:any) {
+      alert("Error: " + (err?.message || "Unknown"));
+    } finally {
+      setSubmitting(false);
+    }
+  };
