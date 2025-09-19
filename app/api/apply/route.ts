@@ -3,25 +3,44 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
 type Payload = {
-  fullName: string;
-  email: string;
-  tier: string;
-  amount: string;
+  fullName?: string;
+  name?: string;
+  email?: string;
+  mail?: string;
+  tier?: string;
+  amount?: string | number;
   message?: string;
-  consent: boolean;
+  consent?: boolean | string | number;
   hp?: string;
 };
 
-const ALLOWED_ORIGINS = ["https://petb-ok-main.vercel.app", "http://localhost:3000"];
+function pick(val: any): string {
+  return (val ?? "").toString().trim();
+}
 
 export async function POST(req: Request) {
   try {
     const data = (await req.json()) as Payload;
 
-    if (!data.fullName || !data.email || !data.tier || !data.amount) {
-      return NextResponse.json({ ok: false, error: "Missing required fields" }, { status: 400 });
+    const fullName = pick(data.fullName || data.name);
+    const email = pick(data.email || data.mail);
+    const tier = pick(data.tier);
+    const amount = pick(data.amount);
+    const message = pick(data.message);
+
+    const consentRaw = (data.consent ?? "").toString();
+    const consent = ["true","on","1","yes","y","checked","✓","✅","☑","☒","t","Y","True","TRUE","Ok","OK","ok","accepted","accept","agree","agreed"].includes(consentRaw);
+
+    const missing: string[] = [];
+    if (!fullName) missing.push("fullName");
+    if (!email) missing.push("email");
+    if (!tier) missing.push("tier");
+    if (!amount) missing.push("amount");
+
+    if (missing.length) {
+      return NextResponse.json({ ok: false, error: "Missing required fields", missing }, { status: 400 });
     }
-    if (!data.consent) {
+    if (!consent) {
       return NextResponse.json({ ok: false, error: "Consent is required" }, { status: 400 });
     }
     if (data.hp) {
@@ -35,23 +54,23 @@ export async function POST(req: Request) {
     const html = `
       <h2>New Whitelist Application</h2>
       <ul>
-        <li><b>Full name:</b> ${escapeHtml(data.fullName)}</li>
-        <li><b>Email:</b> ${escapeHtml(data.email)}</li>
-        <li><b>Participation tier:</b> ${escapeHtml(data.tier)}</li>
-        <li><b>Intended contribution (BTC):</b> ${escapeHtml(data.amount)}</li>
+        <li><b>Full name:</b> ${escapeHtml(fullName)}</li>
+        <li><b>Email:</b> ${escapeHtml(email)}</li>
+        <li><b>Participation tier:</b> ${escapeHtml(tier)}</li>
+        <li><b>Intended contribution (BTC):</b> ${escapeHtml(amount)}</li>
       </ul>
       <p><b>Message:</b></p>
-      <pre style="white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;">${escapeHtml(data.message || "")}</pre>
+      <pre style="white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;">${escapeHtml(message)}</pre>
     `;
 
     await resend.emails.send({ from, to, subject: "New Whitelist Application", html });
 
-    if (data.email) {
+    if (email) {
       await resend.emails.send({
         from,
-        to: data.email,
+        to: email,
         subject: "We received your whitelist application",
-        html: "<p>Thanks! We have received your application and will reach out for KYC/AML and on‑chain instructions.</p>"
+        html: "<p>Thanks! We have received your application and will reach out for KYC/AML and on-chain instructions.</p>"
       });
     }
 
