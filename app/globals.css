@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html, body {
+  min-height: 100%;
+  background: #11100c; /* deep neutral to let gold glow */
+}
+
+/* Smooth fonts for embossed look */
+body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
