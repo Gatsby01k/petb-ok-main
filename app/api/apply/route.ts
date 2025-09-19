@@ -1,4 +1,4 @@
-
+// app/api/apply/route.ts
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
@@ -25,7 +25,7 @@ async function parseBody(req: Request): Promise<AnyDict> {
 }
 
 const escapeHtml = (s: string) =>
-  String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;");
+  String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 
 function pickFirst(obj: AnyDict, keys: string[]): string {
   for (const k of keys) {
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
   try {
     const data = await parseBody(req);
 
-    // Normalized fields (without breaking original table)
+    // Нормализованные поля (не ломая "Raw payload")
     const fullName = pickFirst(data, ["fullName","name","fullname","full_name","full-name","full name"]);
     const email    = pickFirst(data, ["email","mail","e-mail","e_mail"]);
     const tier     = pickFirst(data, ["tier","participation","level"]);
