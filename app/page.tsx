@@ -225,7 +225,7 @@ const Apply = () => {
     const form = e.currentTarget;
     const fd = new FormData(form);
     const payload = {
-      fullName: String(fd.get("name") || "").trim(),
+      fullName: String(fd.get("fullName") || fd.get("name") || "").trim(),
       email: String(fd.get("email") || "").trim(),
       tier: String(fd.get("tier") || ""),
       amount: String(fd.get("amount") || ""),
