@@ -218,6 +218,39 @@ const OnChain = () => (
 );
 
 const Apply = () => {
+
+  const [submitting, setSubmitting] = React.useState(false);
+  const onSubmitApply: React.FormEventHandler<HTMLFormElement> = async (e) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const payload = {
+      fullName: String(fd.get("name") || "").trim(),
+      email: String(fd.get("email") || "").trim(),
+      tier: String(fd.get("tier") || ""),
+      amount: String(fd.get("amount") || ""),
+      message: String(fd.get("message") || ""),
+      consent: !!fd.get("consent"),
+      hp: String(fd.get("website") || ""),
+    };
+    try {
+      setSubmitting(true);
+      const res = await fetch("/api/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const j = await res.json();
+      if (!res.ok || !j.ok) throw new Error(j.error || "Submit failed");
+      alert("Application sent. We'll contact you soon.");
+      form.reset();
+    } catch (err:any) {
+      alert("Error: " + (err?.message || "Unknown"));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <section id="apply" className="relative py-16 sm:py-24">
       <div className="mx-auto max-w-4xl px-6">
@@ -231,7 +264,7 @@ const Apply = () => {
             </div>
 
             {/* НАТИВНАЯ ОТПРАВКА — без JS */}
-            <form className="grid sm:grid-cols-2 gap-4" action="/api/apply" method="POST" noValidate>
+            <form className="grid sm:grid-cols-2 gap-4" action="/api/apply" method="POST" noValidate onSubmit={onSubmitApply}>
               {/* honeypot (антибот) */}
               <input type="text" name="website" className="hidden" tabIndex={-1} autoComplete="off" />
 
@@ -277,7 +310,7 @@ const Apply = () => {
                 </label>
 
                 <button
-                  type="submit"
+                  type="submit" disabled={submitting}
                   className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-br from-amber-200 to-yellow-400 text-black/80 px-5 py-3 font-semibold shadow hover:shadow-lg transition"
                 >
                   Submit application
