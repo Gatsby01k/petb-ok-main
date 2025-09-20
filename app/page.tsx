@@ -1,21 +1,21 @@
 "use client";
 import React from "react";
-import { motion, useScroll, useTransform, useSpring, useReducedMotion } from "framer-motion";
+import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import {
   ArrowRight,
   ShieldCheck,
   Sparkles,
   Zap,
-  Coins,
   PieChart,
+  ChevronDown,
+  Check,
   Crown,
   Star,
-  Check,
-  ChevronDown,
+  Coins,
 } from "lucide-react";
 
 /* =========================
-   BRAND: ₿ + wordmark (только в шапке/футере)
+   BRAND
 ========================= */
 
 function BTCBadge({ className = "" }: { className?: string }) {
@@ -43,7 +43,7 @@ function WordmarkBP() {
 }
 
 /* =========================
-   BACKGROUND + cursor sheen
+   BACKGROUND (no cursor sheen)
 ========================= */
 
 function Background() {
@@ -57,35 +57,6 @@ function Background() {
       <div className="bg-orb o2" />
     </>
   );
-}
-
-/** Диагональная подсветка (sheen) — с учётом reduced motion */
-function MouseSheen(): JSX.Element {
-  const ref = React.useRef<HTMLDivElement | null>(null);
-  const prefersReducedMotion = useReducedMotion();
-
-  React.useEffect(() => {
-    if (prefersReducedMotion) return; // уважение prefers-reduced-motion
-    let raf = 0;
-    const onMove = (e: PointerEvent) => {
-      const x = e.clientX + "px";
-      const y = e.clientY + "px";
-      cancelAnimationFrame(raf);
-      raf = window.requestAnimationFrame(() => {
-        if (ref.current) {
-          ref.current.style.setProperty("--mx", x);
-          ref.current.style.setProperty("--my", y);
-        }
-      });
-    };
-    window.addEventListener("pointermove", onMove, { passive: true });
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      cancelAnimationFrame(raf);
-    };
-  }, [prefersReducedMotion]);
-
-  return <div ref={ref} className="mouse-sheen" aria-hidden />;
 }
 
 /* =========================
@@ -108,93 +79,99 @@ function FrameCard({
   );
 }
 
-/* ===== кастомный доступный select для Tiers (listbox pattern) ===== */
+/* =========================
+   Custom SVG ₿ coin (embossed)
+========================= */
+
+function BTCGlyphIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 64 64" aria-hidden focusable="false">
+      <defs>
+        <linearGradient id="btcG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#fff2bf" />
+          <stop offset="45%" stopColor="#ffd35a" />
+          <stop offset="100%" stopColor="#ffb800" />
+        </linearGradient>
+        <radialGradient id="rimG" cx="30%" cy="25%" r="70%">
+          <stop offset="0%" stopColor="rgba(255,255,255,.28)" />
+          <stop offset="60%" stopColor="rgba(255,255,255,.08)" />
+          <stop offset="100%" stopColor="rgba(0,0,0,.20)" />
+        </radialGradient>
+      </defs>
+      {/* rim & face */}
+      <circle cx="32" cy="32" r="30" fill="url(#rimG)" opacity=".6" />
+      <circle cx="32" cy="32" r="22" fill="rgba(0,0,0,.06)" />
+      {/* micro Y-shade (bottom) */}
+      <rect x="6" y="34" width="52" height="16" rx="8" fill="rgba(0,0,0,.12)" />
+      {/* ₿ glyph */}
+      <text
+        x="32"
+        y="40"
+        textAnchor="middle"
+        fontSize="34"
+        fontWeight={900}
+        fill="url(#btcG)"
+        paintOrder="stroke"
+        stroke="#1a1400"
+        strokeWidth={1.5}
+      >
+        ₿
+      </text>
+    </svg>
+  );
+}
+
+/* =========================
+   Custom Select (dark)
+========================= */
 
 type TierOption = { label: string; value: string; note?: string };
 
 const TIER_OPTIONS: TierOption[] = [
-  { label: "Strategic Investor (≥ 1 BTC)", value: "Strategic Investor", note: "1% equity • x10 airdrop" },
-  { label: "Premium Supporter (≥ 0.1 BTC)", value: "Premium Supporter", note: "x5 airdrop • priority access" },
-  { label: "Early Partner (≥ 0.01 BTC)", value: "Early Partner", note: "x2 airdrop • early perks" },
+  {
+    label: "Strategic Investor (≥ 1 BTC)",
+    value: "Strategic Investor",
+    note: "1% equity • x10 airdrop",
+  },
+  {
+    label: "Premium Supporter (≥ 0.1 BTC)",
+    value: "Premium Supporter",
+    note: "x5 airdrop • priority access",
+  },
+  {
+    label: "Early Partner (≥ 0.01 BTC)",
+    value: "Early Partner",
+    note: "x2 airdrop • early perks",
+  },
 ];
 
-function TierSelect({
-  name,
-  defaultValue,
-}: {
-  name: string;
-  defaultValue?: string;
-}) {
-  const [open, setOpen] = React.useState<boolean>(false);
-  const [activeIndex, setActiveIndex] = React.useState<number>(0);
+function TierSelect({ name, defaultValue }: { name: string; defaultValue?: string }) {
+  const [open, setOpen] = React.useState(false);
   const [selected, setSelected] = React.useState<TierOption>(
     TIER_OPTIONS.find((t) => t.value === defaultValue) || TIER_OPTIONS[0]
   );
   const btnRef = React.useRef<HTMLButtonElement | null>(null);
   const listRef = React.useRef<HTMLDivElement | null>(null);
-  const listboxId = React.useId();
 
-  // sync activeIndex to selected
-  React.useEffect(() => {
-    const idx = TIER_OPTIONS.findIndex((o) => o.value === selected.value);
-    if (idx >= 0) setActiveIndex(idx);
-  }, [selected.value]);
-
-  // outside click
   React.useEffect(() => {
     const onDoc = (e: MouseEvent) => {
       if (!open) return;
       const target = e.target as Node | null;
-      if (!btnRef.current?.contains(target) && !listRef.current?.contains(target)) {
-        setOpen(false);
-      }
+      if (!btnRef.current?.contains(target) && !listRef.current?.contains(target)) setOpen(false);
     };
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
-  const commitSelection = (idx: number) => {
-    const opt = TIER_OPTIONS[idx];
-    if (!opt) return;
-    setSelected(opt);
-    setOpen(false);
-    // вернуть фокус на кнопку для доступности
-    btnRef.current?.focus();
-  };
-
-  const onButtonKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+  const onKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (!open && (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ")) {
       e.preventDefault();
       setOpen(true);
       return;
     }
     if (open && e.key === "Escape") {
-      e.preventDefault();
       setOpen(false);
       return;
-    }
-  };
-
-  const onListKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!open) return;
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setActiveIndex((i) => (i + 1) % TIER_OPTIONS.length);
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setActiveIndex((i) => (i - 1 + TIER_OPTIONS.length) % TIER_OPTIONS.length);
-    } else if (e.key === "Home") {
-      e.preventDefault();
-      setActiveIndex(0);
-    } else if (e.key === "End") {
-      e.preventDefault();
-      setActiveIndex(TIER_OPTIONS.length - 1);
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      commitSelection(activeIndex);
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      setOpen(false);
     }
   };
 
@@ -206,44 +183,37 @@ function TierSelect({
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-controls={listboxId}
         onClick={() => setOpen((v) => !v)}
-        onKeyDown={onButtonKeyDown}
+        onKeyDown={onKeyDown}
         className="select-btn"
       >
         <span className="flex flex-col text-left">
           <span className="text-white">{selected.value}</span>
-          {selected.note && <span className="text-xs text-white/60">{selected.note}</span>}
+          {selected.note && (
+            <span className="text-xs text-white/60">{selected.note}</span>
+          )}
         </span>
-        <ChevronDown className="h-4 w-4 opacity-80" aria-hidden />
+        <ChevronDown className="h-4 w-4 opacity-80" />
       </button>
 
       {open && (
-        <div
-          id={listboxId}
-          ref={listRef}
-          role="listbox"
-          tabIndex={-1}
-          className="select-menu"
-          aria-activedescendant={`${listboxId}-opt-${activeIndex}`}
-          onKeyDown={onListKeyDown}
-        >
-          {TIER_OPTIONS.map((opt, idx) => {
-            const isActive = idx === activeIndex;
-            const isSelected = opt.value === selected.value;
+        <div ref={listRef} role="listbox" tabIndex={-1} className="select-menu">
+          {TIER_OPTIONS.map((opt) => {
+            const isActive = opt.value === selected.value;
             return (
               <button
-                id={`${listboxId}-opt-${idx}`}
                 key={opt.value}
                 role="option"
-                aria-selected={isSelected}
-                onMouseEnter={() => setActiveIndex(idx)}
-                onClick={() => commitSelection(idx)}
-                className={`select-item ${isSelected ? "is-active" : ""} ${isActive ? "is-focused" : ""}`}
+                aria-selected={isActive}
+                onClick={() => {
+                  setSelected(opt);
+                  setOpen(false);
+                }}
+                className={`select-item ${isActive ? "is-active" : ""}`}
               >
                 <div className="flex items-start gap-3">
-                  <div className={`check ${isSelected ? "on" : ""}`}>
-                    <Check className="h-3.5 w-3.5" aria-hidden />
+                  <div className={`check ${isActive ? "on" : ""}`}>
+                    <Check className="h-3.5 w-3.5" />
                   </div>
                   <div className="flex flex-col text-left">
                     <span className="label">{opt.label}</span>
@@ -268,7 +238,11 @@ const tiers = [
     name: "Strategic Investor",
     min: "From 1 BTC",
     equity: "1% company equity",
-    perks: ["x10 $PETB Airdrop", "Permanent DAO council seat", "Revenue share from network fees"],
+    perks: [
+      "x10 $PETB Airdrop",
+      "Permanent DAO council seat",
+      "Revenue share from network fees",
+    ],
     icon: Crown,
     accent: "from-yellow-500 to-amber-500",
     badge: "Top Tier",
@@ -304,32 +278,53 @@ const tiers = [
 
 const Nav = () => (
   <nav className="sticky top-0 z-40 w-full glass" aria-label="Primary">
-    <a href="#content" className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-[100] btn-ghost px-3 py-2">Skip to content</a>
+    <a
+      href="#content"
+      className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-[100] btn-ghost px-3 py-2"
+    >
+      Skip to content
+    </a>
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
       <a href="#home" className="group inline-flex items-center gap-2 sm:gap-3">
         <BTCBadge className="h-9 w-9" />
         <WordmarkBP />
       </a>
       <div className="hidden md:flex items-center gap-6 lg:gap-8 text-sm text-white/75">
-        <a href="#vision" className="hover:text-white transition">Vision</a>
-        <a href="#tiers" className="hover:text-white transition">Tiers</a>
-        <a href="#onchain" className="hover:text-white transition">On-chain</a>
-        <a href="#faq" className="hover:text-white transition">FAQ</a>
-        <a href="#apply" className="hover:text-white transition inline-flex items-center gap-2">
+        <a href="#vision" className="hover:text-white transition">
+          Vision
+        </a>
+        <a href="#tiers" className="hover:text-white transition">
+          Tiers
+        </a>
+        <a href="#onchain" className="hover:text-white transition">
+          On-chain
+        </a>
+        <a href="#faq" className="hover:text-white transition">
+          FAQ
+        </a>
+        <a
+          href="#apply"
+          className="hover:text-white transition inline-flex items-center gap-2"
+        >
           Apply <ArrowRight className="h-4 w-4" />
         </a>
       </div>
-      <a href="#apply" className="md:hidden btn-primary px-3 py-2 text-sm">Join</a>
-      <a href="#apply" className="hidden md:inline-flex btn-primary">Join Whitelist</a>
+      <a href="#apply" className="md:hidden btn-primary px-3 py-2 text-sm">
+        Join
+      </a>
+      <a href="#apply" className="hidden md:inline-flex btn-primary">
+        Join Whitelist
+      </a>
     </div>
   </nav>
 );
 
-/** Hero: тексты — как в оригинале, c respect reduced motion */
 function Hero(): JSX.Element {
   const ref = React.useRef<HTMLElement | null>(null);
-  const prefersReducedMotion = useReducedMotion();
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start start", "end start"],
+  });
   const yTitle = useTransform(scrollYProgress, [0, 1], [0, -80]);
   const yTitleSpring = useSpring(yTitle, { stiffness: 80, damping: 20 });
 
@@ -342,7 +337,7 @@ function Hero(): JSX.Element {
 
         <motion.h1
           id="heroTitle"
-          style={prefersReducedMotion ? undefined : { y: yTitleSpring }}
+          style={{ y: yTitleSpring }}
           className="text-[9vw] sm:text-6xl md:text-7xl font-black tracking-tight text-white leading-[1.05] drop-shadow-[0_1px_0_rgba(0,0,0,0.25)]"
         >
           The future of Bitcoin
@@ -361,13 +356,21 @@ function Hero(): JSX.Element {
           <a href="#apply" className="btn-primary inline-flex items-center gap-2">
             Join <ArrowRight className="h-4 w-4" />
           </a>
-          <a href="#tiers" className="btn-ghost">View Tiers</a>
+          <a href="#tiers" className="btn-ghost">
+            View Tiers
+          </a>
         </div>
 
         <div className="mt-8 sm:mt-10 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-white/70 text-xs sm:text-sm">
-          <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4" aria-hidden /> On-chain Proof</span>
-          <span className="inline-flex items-center gap-2"><Zap className="h-4 w-4" aria-hidden /> High-throughput L1</span>
-          <span className="inline-flex items-center gap-2"><PieChart className="h-4 w-4" aria-hidden /> DAO Governance</span>
+          <span className="inline-flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4" aria-hidden /> On-chain Proof
+          </span>
+          <span className="inline-flex items-center gap-2">
+            <Zap className="h-4 w-4" aria-hidden /> High-throughput L1
+          </span>
+          <span className="inline-flex items-center gap-2">
+            <PieChart className="h-4 w-4" aria-hidden /> DAO Governance
+          </span>
         </div>
       </div>
     </section>
@@ -436,29 +439,37 @@ const Tiers = () => (
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: true, margin: "-10% 0px" }}
             transition={{ duration: 0.6, delay: i * 0.07, ease: "easeOut" }}
+            className="h-full"
           >
             <FrameCard>
-              <div className="flex items-center justify-between">
-                <div className="inline-flex items-center gap-2">
-                  <div className={`h-10 w-10 rounded-2xl bg-gradient-to-br ${t.accent} grid place-items-center`}>
-                    <t.icon className="h-5 w-5 text-black/70" aria-hidden />
+              <div className="flex h-full flex-col">
+                <div className="flex items-center justify-between">
+                  <div className="inline-flex items-center gap-3">
+                    <div className={`icon-coin bg-gradient-to-br ${t.accent}`}>
+                      <BTCGlyphIcon className="coin-btc" />
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold text-white">{t.name}</h3>
                   </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-white">{t.name}</h3>
+                  <span className="chip">{t.badge}</span>
                 </div>
-                <span className="chip">{t.badge}</span>
-              </div>
-              <div className="mt-4 text-white/85">
-                <div className="mini-k uppercase">Minimum</div>
-                <div className="text-lg font-semibold">{t.min}</div>
-                {t.equity && <div className="equity">{t.equity}</div>}
-                <ul className="mt-5 space-y-3">
-                  {t.perks.map((p) => (
-                    <li key={p} className="flex items-start gap-3"><span className="bullet" /> {p}</li>
-                  ))}
-                </ul>
-                <a href="#apply" className="btn-line mt-6 inline-flex">
-                  Apply <ArrowRight className="h-4 w-4 ml-2" />
-                </a>
+
+                <div className="mt-4 text-white/85">
+                  <div className="mini-k uppercase">Minimum</div>
+                  <div className="text-lg font-semibold">{t.min}</div>
+                  {t.equity && <div className="equity">{t.equity}</div>}
+                  <ul className="mt-5 space-y-3">
+                    {t.perks.map((p) => (
+                      <li key={p} className="flex items-start gap-3"><span className="bullet" /> {p}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* keep Apply aligned across equal-height cards */}
+                <div className="mt-auto pt-6">
+                  <a href="#apply" className="btn-line inline-flex items-center">
+                    Apply <ArrowRight className="h-4 w-4 ml-2" />
+                  </a>
+                </div>
               </div>
             </FrameCard>
           </motion.div>
@@ -501,9 +512,9 @@ const OnChain = () => (
 );
 
 const Apply = () => {
-  const [submitting, setSubmitting] = React.useState<boolean>(false);
+  const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [ok, setOk] = React.useState<boolean>(false);
+  const [ok, setOk] = React.useState(false);
 
   const onSubmitApply: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
@@ -528,9 +539,7 @@ const Apply = () => {
         body: JSON.stringify(payload),
       });
       let j: any = {};
-      try {
-        j = await res.json();
-      } catch {}
+      try { j = await res.json(); } catch {}
       if (!res.ok || j?.ok === false) {
         const details = j?.missing ? ` (${j.missing.join(", ")})` : "";
         throw new Error((j?.error || res.statusText || "Submit failed") + details);
@@ -681,7 +690,7 @@ export default function Page(): JSX.Element {
   return (
     <div className="min-h-screen body-bg text-white relative overflow-x-hidden">
       <Background />
-      <MouseSheen />
+      {/* cursor sheen removed */}
       <Nav />
       <Hero />
       <section id="vision-anchor">
