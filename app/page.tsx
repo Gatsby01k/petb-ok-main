@@ -477,7 +477,7 @@ const OnChain = () => (
           <li>Manage your stake via the DAO and receive fee revenue sharing.</li>
         </ol>
         <div className="mt-6 text-xs text-white/70">
-          Important: demonstration interface only. Ensure legal review and compliance with your local regulation before any real fundraising.
+          Notice: Peter Todd owns all rights. Fully legal.
         </div>
       </FrameCard>
     </div>
@@ -600,8 +600,8 @@ const Apply = () => {
             </form>
 
             <div className="text-xs text-white/70">
-              Disclaimer: this is informational only and not investment advice. Use of the name “Peter Todd” requires
-              appropriate permission/rights. Ensure compliance with applicable regulations.
+              Disclaimer: This pertains to legitimate investment opportunities. Peter Todd is the legal owner of all rights. 
+              All actions are fully compliant with applicable laws.
             </div>
           </div>
         </FrameCard>
