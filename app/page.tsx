@@ -1,17 +1,29 @@
 "use client";
 import React from "react";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
-import { ArrowRight, ShieldCheck, Sparkles, Zap, Coins, PieChart, Crown, Star, Check, ChevronDown } from "lucide-react";
+import {
+  ArrowRight,
+  ShieldCheck,
+  Sparkles,
+  Zap,
+  Coins,
+  PieChart,
+  Crown,
+  Star,
+  Check,
+  ChevronDown,
+} from "lucide-react";
 
 /* =========================
-   BRAND: минимал ₿ + слово-знак
-   (лого появится ТОЛЬКО в шапке и футере)
+   BRAND: ₿ + wordmark (только в шапке/футере)
 ========================= */
 
-function BTCBadge({ className = "" }) {
+function BTCBadge({ className = "" }: { className?: string }) {
   return (
     <span className={`btc-badge ${className}`}>
-      <span className="btc-glyph" aria-hidden>₿</span>
+      <span className="btc-glyph" aria-hidden>
+        ₿
+      </span>
     </span>
   );
 }
@@ -19,15 +31,19 @@ function BTCBadge({ className = "" }) {
 function WordmarkBP() {
   return (
     <span className="bp-wordmark inline-flex items-baseline gap-3">
-      <span className="bp-main font-extrabold tracking-tight leading-none">Bitcoin</span>
+      <span className="bp-main font-extrabold tracking-tight leading-none">
+        Bitcoin
+      </span>
       <span aria-hidden className="bp-divider" />
-      <span className="bp-sub uppercase tracking-[0.16em] font-semibold">Peter&nbsp;Todd</span>
+      <span className="bp-sub uppercase tracking-[0.16em] font-semibold">
+        Peter&nbsp;Todd
+      </span>
     </span>
   );
 }
 
 /* =========================
-   BACKGROUND + cursor sheen (вместо свечения)
+   BACKGROUND + cursor sheen
 ========================= */
 
 function Background() {
@@ -43,26 +59,26 @@ function Background() {
   );
 }
 
-/** Диагональный световой "sheen"-слой, мягко следует за курсором (без круглого блика) */
-function MouseSheen() {
-  const ref = React.useRef(null);
+/** Диагональная подсветка (sheen) — типизировано для TS */
+function MouseSheen(): JSX.Element {
+  const ref = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
     let raf = 0;
-    const onMove = (e) => {
+    const onMove = (e: MouseEvent) => {
       const x = e.clientX + "px";
       const y = e.clientY + "px";
       cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
+      raf = window.requestAnimationFrame(() => {
         if (ref.current) {
           ref.current.style.setProperty("--mx", x);
           ref.current.style.setProperty("--my", y);
         }
       });
     };
-    window.addEventListener("mousemove", onMove, { passive: true });
+    window.addEventListener("mousemove", onMove as EventListener, { passive: true });
     return () => {
-      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mousemove", onMove as EventListener);
       cancelAnimationFrame(raf);
     };
   }, []);
@@ -74,7 +90,15 @@ function MouseSheen() {
    UI helpers
 ========================= */
 
-function FrameCard({ children, className = "", glow = false }) {
+function FrameCard({
+  children,
+  className = "",
+  glow = false,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  glow?: boolean;
+}) {
   return (
     <div className={`frame ${glow ? "frame-glow" : ""} ${className}`}>
       <div className="frame-inner">{children}</div>
@@ -84,36 +108,50 @@ function FrameCard({ children, className = "", glow = false }) {
 
 /* ===== кастомный тёмный select для Tiers ===== */
 
-const TIER_OPTIONS = [
+type TierOption = { label: string; value: string; note?: string };
+
+const TIER_OPTIONS: TierOption[] = [
   { label: "Strategic Investor (≥ 1 BTC)", value: "Strategic Investor", note: "1% equity • x10 airdrop" },
   { label: "Premium Supporter (≥ 0.1 BTC)", value: "Premium Supporter", note: "x5 airdrop • priority access" },
   { label: "Early Partner (≥ 0.01 BTC)", value: "Early Partner", note: "x2 airdrop • early perks" },
 ];
 
-function TierSelect({ name, defaultValue }) {
-  const [open, setOpen] = React.useState(false);
-  const [selected, setSelected] = React.useState(
+function TierSelect({
+  name,
+  defaultValue,
+}: {
+  name: string;
+  defaultValue?: string;
+}) {
+  const [open, setOpen] = React.useState<boolean>(false);
+  const [selected, setSelected] = React.useState<TierOption>(
     TIER_OPTIONS.find((t) => t.value === defaultValue) || TIER_OPTIONS[0]
   );
-  const btnRef = React.useRef(null);
-  const listRef = React.useRef(null);
+  const btnRef = React.useRef<HTMLButtonElement | null>(null);
+  const listRef = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
-    const onDoc = (e) => {
+    const onDoc = (e: MouseEvent) => {
       if (!open) return;
-      if (!btnRef.current?.contains(e.target) && !listRef.current?.contains(e.target)) setOpen(false);
+      const target = e.target as Node | null;
+      if (!btnRef.current?.contains(target) && !listRef.current?.contains(target)) {
+        setOpen(false);
+      }
     };
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
-  const onKeyDown = (e) => {
+  const onKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (!open && (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ")) {
       e.preventDefault();
       setOpen(true);
       return;
     }
-    if (open && e.key === "Escape") setOpen(false);
+    if (open && e.key === "Escape") {
+      setOpen(false);
+      return;
+    }
   };
 
   return (
@@ -185,7 +223,7 @@ const tiers = [
   {
     name: "Premium Supporter",
     min: "From 0.1 BTC",
-    equity: null,
+    equity: null as string | null,
     perks: [
       "x5 $PETB Airdrop",
       "Priority access to all releases",
@@ -199,13 +237,13 @@ const tiers = [
   {
     name: "Early Partner",
     min: "From 0.01 BTC",
-    equity: null,
+    equity: null as string | null,
     perks: ["x2 $PETB Airdrop", "Bonus conditions for future grant rounds"],
     icon: Coins,
     accent: "from-amber-300 to-lime-400",
     badge: "Early",
   },
-];
+] as const;
 
 /* =========================
    NAV / HERO / SECTIONS / FOOTER
@@ -233,9 +271,9 @@ const Nav = () => (
   </nav>
 );
 
-/** Hero: ВОЗВРАЩАЮ оригинальные тексты как были у тебя */
-function Hero() {
-  const ref = React.useRef(null);
+/** Hero: тексты — как в твоём оригинале */
+function Hero(): JSX.Element {
+  const ref = React.useRef<HTMLElement | null>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const yTitle = useTransform(scrollYProgress, [0, 1], [0, -80]);
   const yTitleSpring = useSpring(yTitle, { stiffness: 80, damping: 20 });
@@ -247,7 +285,10 @@ function Hero() {
           <Sparkles className="h-3.5 w-3.5" /> Awwwards-style concept
         </div>
 
-        <motion.h1 style={{ y: yTitleSpring }} className="text-[9vw] sm:text-6xl md:text-7xl font-black tracking-tight text-white leading-[1.05] drop-shadow-[0_1px_0_rgba(0,0,0,0.25)]">
+        <motion.h1
+          style={{ y: yTitleSpring }}
+          className="text-[9vw] sm:text-6xl md:text-7xl font-black tracking-tight text-white leading-[1.05] drop-shadow-[0_1px_0_rgba(0,0,0,0.25)]"
+        >
           The future of Bitcoin
           <span className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400 drop-shadow-[0_2px_8px_rgba(255,200,0,0.25)]">
             powered by Peter Todd
@@ -255,7 +296,9 @@ function Hero() {
         </motion.h1>
 
         <p className="mt-5 sm:mt-6 text-base sm:text-lg md:text-xl text-white/85 mx-auto max-w-2xl sm:max-w-3xl">
-          Investments and strategic support: Peter Todd Bitcoin is launching a next-generation blockchain, offering a limited circle of investors a unique opportunity to become co-owners of the project. Every contribution is recorded on-chain, ensuring transparency and legal integrity.
+          Investments and strategic support: Peter Todd Bitcoin is launching a next-generation blockchain,
+          offering a limited circle of investors a unique opportunity to become co-owners of the project.
+          Every contribution is recorded on-chain, ensuring transparency and legal integrity.
         </p>
 
         <div className="mt-8 sm:mt-10 flex items-center justify-center gap-3 sm:gap-4">
@@ -266,9 +309,9 @@ function Hero() {
         </div>
 
         <div className="mt-8 sm:mt-10 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-white/70 text-xs sm:text-sm">
-          <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4"/> On-chain Proof</span>
-          <span className="inline-flex items-center gap-2"><Zap className="h-4 w-4"/> High-throughput L1</span>
-          <span className="inline-flex items-center gap-2"><PieChart className="h-4 w-4"/> DAO Governance</span>
+          <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> On-chain Proof</span>
+          <span className="inline-flex items-center gap-2"><Zap className="h-4 w-4" /> High-throughput L1</span>
+          <span className="inline-flex items-center gap-2"><PieChart className="h-4 w-4" /> DAO Governance</span>
         </div>
       </div>
     </section>
@@ -281,7 +324,8 @@ const Vision = () => (
       <FrameCard glow>
         <h2 className="text-2xl sm:text-3xl font-extrabold text-white">Why Peter Todd Bitcoin?</h2>
         <p className="mt-4 text-white/85 leading-relaxed">
-          We are designing a sustainable monetary network with a focus on verifiability, modular scalability, and fee-based economics, where participants receive a share of the network’s value.
+          We are designing a sustainable monetary network with a focus on verifiability,
+          modular scalability, and fee-based economics, where participants receive a share of the network’s value.
         </p>
         <ul className="mt-6 space-y-3 text-white/85">
           <li className="flex items-start gap-3"><span className="bullet" /> Uncompromising transparency: funds and shares are managed by smart contracts.</li>
@@ -392,15 +436,18 @@ const OnChain = () => (
           <li>At the end of the round, $PETB is minted and the airdrop is distributed.</li>
           <li>Manage your stake via the DAO and receive fee revenue sharing.</li>
         </ol>
-        <div className="mt-6 text-xs text-white/70">Important: demonstration interface only. Ensure legal review and compliance with your local regulation before any real fundraising.</div>
+        <div className="mt-6 text-xs text-white/70">
+          Important: demonstration interface only. Ensure legal review and compliance with your local regulation before any real fundraising.
+        </div>
       </FrameCard>
     </div>
   </section>
 );
 
 const Apply = () => {
-  const [submitting, setSubmitting] = React.useState(false);
-  const onSubmitApply = async (e) => {
+  const [submitting, setSubmitting] = React.useState<boolean>(false);
+
+  const onSubmitApply: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     const form = e.currentTarget;
     const fd = new FormData(form);
@@ -420,16 +467,19 @@ const Apply = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      let j = {};
-      try { j = await res.json(); } catch {}
+      let j: any = {};
+      try {
+        j = await res.json();
+      } catch {}
       if (!res.ok || j?.ok === false) {
         const details = j?.missing ? ` (${j.missing.join(", ")})` : "";
         throw new Error((j?.error || res.statusText || "Submit failed") + details);
       }
       alert("Application sent. We'll contact you soon.");
       form.reset();
-    } catch (err) {
-      alert("Error: " + (err?.message || "Unknown"));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      alert("Error: " + message);
     } finally {
       setSubmitting(false);
     }
@@ -442,10 +492,19 @@ const Apply = () => {
           <div className="flex flex-col gap-6">
             <div>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-white">Whitelist Application</h2>
-              <p className="mt-2 text-white/85">Share your contact details and intended tier. We’ll reach out for KYC/AML and on-chain instructions.</p>
+              <p className="mt-2 text-white/85">
+                Share your contact details and intended tier. We’ll reach out for KYC/AML and on-chain instructions.
+              </p>
             </div>
 
-            <form className="grid sm:grid-cols-2 gap-4" action="/api/apply" method="POST" noValidate onSubmit={onSubmitApply}>
+            <form
+              className="grid sm:grid-cols-2 gap-4"
+              action="/api/apply"
+              method="POST"
+              noValidate
+              onSubmit={onSubmitApply}
+            >
+              {/* honeypot */}
               <input type="text" name="website" className="hidden" tabIndex={-1} autoComplete="off" />
 
               <div className="sm:col-span-1">
@@ -486,7 +545,8 @@ const Apply = () => {
             </form>
 
             <div className="text-xs text-white/70">
-              Disclaimer: this is informational only and not investment advice. Use of the name “Peter Todd” requires appropriate permission/rights. Ensure compliance with applicable regulations.
+              Disclaimer: this is informational only and not investment advice. Use of the name “Peter Todd” requires
+              appropriate permission/rights. Ensure compliance with applicable regulations.
             </div>
           </div>
         </FrameCard>
@@ -500,10 +560,22 @@ const FAQ = () => (
     <div className="mx-auto max-w-5xl px-4 sm:px-6">
       <div className="grid md:grid-cols-2 gap-6">
         {[
-          { q: "Is this a public offer?", a: "No. This website is a demonstration concept. A formal legal review and official documentation are required before launch." },
-          { q: "What does on-chain recording mean?", a: "Each contribution is linked to a transaction and address, validated by a smart contract, and viewable in a blockchain explorer." },
-          { q: "How is rev-share distributed?", a: "Under DAO rules — based on ownership snapshots and votes; details are published in on-chain reports." },
-          { q: "Can I exit?", a: "Depends on tokenomics and local regulation: cliff/vesting periods and secondary markets may apply." },
+          {
+            q: "Is this a public offer?",
+            a: "No. This website is a demonstration concept. A formal legal review and official documentation are required before launch.",
+          },
+          {
+            q: "What does on-chain recording mean?",
+            a: "Each contribution is linked to a transaction and address, validated by a smart contract, and viewable in a blockchain explorer.",
+          },
+          {
+            q: "How is rev-share distributed?",
+            a: "Under DAO rules — based on ownership snapshots and votes; details are published in on-chain reports.",
+          },
+          {
+            q: "Can I exit?",
+            a: "Depends on tokenomics and local regulation: cliff/vesting periods and secondary markets may apply.",
+          },
         ].map((item, i) => (
           <FrameCard key={i}>
             <h3 className="text-lg font-bold text-white">{item.q}</h3>
@@ -522,7 +594,7 @@ const Footer = () => (
         <BTCBadge className="h-9 w-9" />
         <WordmarkBP />
       </a>
-      <div className="flex items-center gap-6">
+    <div className="flex items-center gap-6">
         <a href="#" className="hover:text-white transition">Terms</a>
         <a href="#" className="hover:text-white transition">Privacy</a>
         <a href="#" className="hover:text-white transition">Imprint</a>
@@ -533,14 +605,16 @@ const Footer = () => (
   </footer>
 );
 
-export default function Page() {
+export default function Page(): JSX.Element {
   return (
     <div className="min-h-screen body-bg text-white relative overflow-x-hidden">
       <Background />
       <MouseSheen />
       <Nav />
-      <Hero />   {/* ← вернул оригинальные тексты */}
-      <section id="vision-anchor"><Vision /></section>
+      <Hero />
+      <section id="vision-anchor">
+        <Vision />
+      </section>
       <Tiers />
       <OnChain />
       <Apply />
