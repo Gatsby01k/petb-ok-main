@@ -617,19 +617,19 @@ const FAQ = () => (
         {[
           {
             q: "Is this a public offer?",
-            a: "No. This website is a demonstration concept. A formal legal review and official documentation are required before launch.",
+            a: "No. Access is only through our whitelist with fixed allocations and on-chain confirmation.",
           },
           {
             q: "What does on-chain recording mean?",
-            a: "Each contribution is linked to a transaction and address, validated by a smart contract, and viewable in a blockchain explorer.",
+            a: "Every contribution is written to the blockchain and permanently verifiable.",
           },
           {
             q: "How is rev-share distributed?",
-            a: "Under DAO rules — based on ownership snapshots and votes; details are published in on-chain reports.",
+            a: "Revenue share is paid automatically under DAO rules based on token balances.",
           },
           {
             q: "Can I exit?",
-            a: "Depends on tokenomics and local regulation: cliff/vesting periods and secondary markets may apply.",
+            a: "Yes. After the lock-up, allocations can be transferred or traded on supported markets.",
           },
         ].map((item, i) => (
           <FrameCard key={i}>
