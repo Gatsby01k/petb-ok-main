@@ -9,6 +9,11 @@ import {
   PieChart,
   ChevronDown,
   Check,
+  Facebook,
+  Linkedin,
+  Instagram,
+  Send, // для Telegram
+  Mail,
 } from "lucide-react";
 
 /* =========================
@@ -144,9 +149,7 @@ function TierSelect({ name, defaultValue }: { name: string; defaultValue?: strin
       >
         <span className="flex flex-col text-left">
           <span className="text-white">{selected.value}</span>
-          {selected.note && (
-            <span className="text-xs text-white/60">{selected.note}</span>
-          )}
+          {selected.note && <span className="text-xs text-white/60">{selected.note}</span>}
         </span>
         <ChevronDown className="h-4 w-4 opacity-80" />
       </button>
@@ -193,11 +196,7 @@ const tiers = [
     name: "Strategic Investor",
     min: "From 1 BTC",
     equity: "1% company equity",
-    perks: [
-      "x10 $PETB Airdrop",
-      "Permanent DAO council seat",
-      "Revenue share from network fees",
-    ],
+    perks: ["x10 $PETB Airdrop", "Permanent DAO council seat", "Revenue share from network fees"],
     badge: "Top Tier",
   },
   {
@@ -220,6 +219,53 @@ const tiers = [
     badge: "Early",
   },
 ] as const;
+
+/* =========================
+   Socials & Contact
+========================= */
+
+const SocialLinks = () => {
+  // отдельный X-логотип — тонкие перекрестные линии (чтобы не тянуть внешние наборы)
+  const XMark = () => (
+    <svg viewBox="0 0 24 24" aria-hidden className="social-svg">
+      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+    </svg>
+  );
+
+  const items = [
+    { href: "https://x.com/Peter_Todd_BTC", label: "X (Twitter)", custom: <XMark /> },
+    { href: "https://www.facebook.com/PeterToddBitcoin", label: "Facebook", icon: Facebook },
+    { href: "https://www.linkedin.com/company/peter-todd-bitcoin/", label: "LinkedIn", icon: Linkedin },
+    { href: "https://www.instagram.com/bitcoinpetertodd/", label: "Instagram", icon: Instagram },
+    { href: "https://t.me/PeterTodd_Bitcoin", label: "Telegram", icon: Send },
+  ] as const;
+
+  return (
+    <div className="socials" aria-label="Social links">
+      {items.map((it) => {
+        const Icon = (it as any).icon as React.ComponentType<{ className?: string }>;
+        return (
+          <a key={it.href} href={it.href} target="_blank" rel="noopener noreferrer" aria-label={it.label} className="social-coin">
+            {"custom" in it ? it.custom : <Icon className="social-svg" />}
+          </a>
+        );
+      })}
+    </div>
+  );
+};
+
+const ContactRow = () => (
+  <div className="contacts" aria-label="Contact emails">
+    <a href="mailto:info@bitcoinpetertodd.com" className="contact-pill">
+      <Mail className="h-4 w-4" aria-hidden />
+      info@bitcoinpetertodd.com
+    </a>
+    <a href="mailto:invest@bitcoinpetertodd.com" className="contact-pill">
+      <Mail className="h-4 w-4" aria-hidden />
+      invest@bitcoinpetertodd.com
+    </a>
+  </div>
+);
 
 /* =========================
    NAV / HERO / SECTIONS / FOOTER
@@ -253,7 +299,7 @@ const Nav = () => (
   </nav>
 );
 
-/* ===== HERO: чистая типографика awwwards ===== */
+/* ===== HERO: чистая типографика awwwards (без линии) ===== */
 function Hero(): JSX.Element {
   const ref = React.useRef<HTMLElement | null>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
@@ -268,17 +314,13 @@ function Hero(): JSX.Element {
           <Sparkles className="h-3.5 w-3.5" aria-hidden /> Awwwards-style concept
         </div>
 
-        <motion.h1
-          id="heroTitle"
-          style={{ y: yTitleSpring }}
-          className="hero-title"
-        >
+        <motion.h1 id="heroTitle" style={{ y: yTitleSpring }} className="hero-title">
           <span className="block">The future of <span className="hero-accent">Bitcoin</span></span>
           <span className="hero-sub">powered by Peter Todd</span>
         </motion.h1>
 
+        {/* Интро — без боковой линии, аккуратный awwwards-стиль */}
         <p className="hero-copy">
-          <span className="copy-accent" aria-hidden />
           Investments and strategic support: Peter Todd Bitcoin is launching a next-generation blockchain,
           offering a limited circle of investors a unique opportunity to become co-owners of the project.
           Every contribution is recorded on-chain, ensuring transparency and legal integrity.
@@ -289,6 +331,12 @@ function Hero(): JSX.Element {
             Join <ArrowRight className="h-4 w-4" />
           </a>
           <a href="#tiers" className="btn-ghost">View Tiers</a>
+        </div>
+
+        {/* Соцсети + Почты */}
+        <div className="mt-7 sm:mt-9 flex flex-col items-center gap-4">
+          <SocialLinks />
+          <ContactRow />
         </div>
 
         <div className="mt-8 sm:mt-10 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-white/70 text-xs sm:text-sm">
@@ -371,7 +419,7 @@ const Tiers = () => (
                 <div className="flex items-center justify-between">
                   <div className="inline-flex items-center gap-3">
                     <div className="icon-coin">
-                      <span className="coin-glyph" aria-hidden>₿</span>
+                      <span className="btc-glyph" aria-hidden>₿</span>
                     </div>
                     <h3 className="text-lg sm:text-xl font-bold text-white">{t.name}</h3>
                   </div>
