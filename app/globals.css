@@ -1,18 +1,10 @@
+/* Tailwind layers (оставь, если уже есть в файле) */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: dark;
-}
-
-html, body {
-  min-height: 100%;
-  background: #11100c; /* deep neutral to let gold glow */
-}
-
-/* Smooth fonts for embossed look */
-body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+/* Базовые кастомки (можно оставить как есть у тебя) */
+html, body { height: 100%; }
 
 /* ===== Awwwards/Bitcoin background layers ===== */
 :root {
@@ -78,18 +70,143 @@ body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
 <rect width='100%' height='100%' filter='url(%23n)' opacity='0.8'/></svg>");
 }
 
-/* brand gradient text */
-.brand-gradient {
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  background-image: linear-gradient(90deg, #ffe089, #ffd35a 35%, #ffb800);
-}
-
-/* header glass line */
+/* header/footer glass tweak */
 .glass {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   background-color: rgba(255,255,255,0.05);
   border-bottom: 1px solid rgba(255,255,255,0.10);
+}
+
+/* ===== Wordmark (вариант 2) ===== */
+.wordmark2 { position: relative; }
+
+.wordmark2 .wm2-main{
+  /* динамичный “золотой” градиент c мягким бликом */
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-image:
+    radial-gradient(120% 180% at 10% 0%, rgba(255,255,255,.35), transparent 40%),
+    linear-gradient(90deg, #ffe089 0%, #ffd35a 35%, #ffb800 60%, #ffd35a 85%, #ffe089 100%);
+  background-size: 220% 220%;
+  animation: wm2-shine 6s linear infinite;
+  letter-spacing: -0.01em;
+  filter: drop-shadow(0 1px 0 rgba(0,0,0,.25));
+}
+@keyframes wm2-shine {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.wordmark2 .wm2-sub{
+  /* техничный капс с обводкой — читабельно и “премиум” */
+  text-transform: uppercase;
+  letter-spacing: .18em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(255, 232, 160, .85);
+  text-shadow:
+    0 0 12px rgba(255, 200, 0, .08),
+    0 0 24px rgba(255, 200, 0, .04);
+  position: relative;
+}
+
+/* тонкий вертикальный разделитель */
+.wordmark2 .wm2-divider{
+  width: 1px;
+  height: 1.1em;
+  background: linear-gradient(180deg, rgba(255,224,138,.85), rgba(255,184,0,.6));
+  opacity: .8;
+  transform: translateY(.08em);
+}
+
+/* hover-эффект */
+nav a:hover .wordmark2 .wm2-main{
+  filter: drop-shadow(0 2px 10px rgba(255, 200, 0, .22));
+}
+nav a:hover .wordmark2 .wm2-sub{
+  -webkit-text-stroke: 1.1px rgba(255, 235, 170, .95);
+}
+
+/* доступность: без анимаций при reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .wordmark2 .wm2-main { animation: none; }
+}
+
+/* ===== Extra awwwards background layers ===== */
+
+/* плавная "полоса-аврора" с конусным градиентом */
+.bg-aurora{
+  position: fixed;
+  inset: -10% -5% 0 -5%;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    conic-gradient(from 180deg at 30% 30%, rgba(255,200,0,0.10), transparent 40% 60%, rgba(255,200,0,0.10)),
+    radial-gradient(60% 80% at 70% 20%, rgba(255,170,0,.10), transparent 70%);
+  filter: blur(22px) saturate(120%);
+  animation: aurora-shift 18s linear infinite alternate;
+}
+@keyframes aurora-shift{
+  0%   { transform: translate3d(0,0,0) rotate(0.001deg); }
+  100% { transform: translate3d(0,-3%,0) rotate(2deg); }
+}
+
+/* две "парящие" сферы с медленной анимацией */
+.bg-orb{
+  position: fixed;
+  border-radius: 9999px;
+  filter: blur(32px);
+  opacity: .18;
+  pointer-events: none;
+  z-index: 0;
+}
+.bg-orb.o1{
+  width: 420px; height: 420px;
+  left: -120px; top: 22%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,200,0,.35), rgba(255,160,0,.10) 60%, transparent 70%);
+  animation: orb-float 22s ease-in-out infinite;
+}
+.bg-orb.o2{
+  width: 320px; height: 320px;
+  right: -100px; top: 62%;
+  background: radial-gradient(circle at 60% 40%, rgba(255,230,120,.28), rgba(255,180,0,.10) 60%, transparent 70%);
+  animation: orb-float 26s ease-in-out infinite reverse;
+}
+@keyframes orb-float{
+  0%   { transform: translateY(0) translateX(0); }
+  50%  { transform: translateY(-4%) translateX(2%); }
+  100% { transform: translateY(0) translateX(0); }
+}
+
+/* курсорный "свет" (поверх сетки/колец, но под контентом) */
+.mouse-spotlight{
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  --mx: 50vw; /* по умолчанию центр */
+  --my: 40vh;
+  background:
+    radial-gradient(420px 420px at var(--mx) var(--my), rgba(255,200,0,.08), transparent 60%),
+    radial-gradient(240px 240px at calc(var(--mx) + 120px) calc(var(--my) + 80px), rgba(255,220,120,.06), transparent 60%);
+  mix-blend-mode: screen;
+}
+
+/* ===== Mobile адаптация фоновых эффектов ===== */
+@media (max-width: 640px){
+  .bg-grid { background-size: 28px 28px; }
+  .bg-orb.o1 { width: 240px; height: 240px; left: -90px; top: 26%; opacity: .14; filter: blur(26px); }
+  .bg-orb.o2 { width: 180px; height: 180px; right: -60px; top: 70%; opacity: .14; filter: blur(24px); }
+  .bg-aurora { filter: blur(18px) saturate(110%); }
+}
+
+/* отключаем spotlight на тач-экранах */
+@media (pointer: coarse) {
+  .mouse-spotlight { display: none; }
+}
+
+/* уважение к reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .bg-aurora, .bg-orb.o1, .bg-orb.o2{ animation: none; }
 }
