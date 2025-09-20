@@ -40,7 +40,7 @@ function WordmarkBP() {
 }
 
 /* =========================
-   BACKGROUND (no cursor sheen)
+   BACKGROUND
 ========================= */
 
 function Background() {
@@ -57,71 +57,6 @@ function Background() {
 }
 
 /* =========================
-   GLOBAL CURSOR — bitcoin ring (awwwards-style)
-========================= */
-function CursorBitcoin(): JSX.Element | null {
-  React.useEffect(() => {
-    if (window.matchMedia("(pointer: coarse)").matches) return; // skip touch
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    const root = document.documentElement;
-    const dot = document.createElement("div");
-    const ring = document.createElement("div");
-    dot.className = "btc-cursor-dot";
-    ring.className = "btc-cursor-ring";
-    document.body.appendChild(dot);
-    document.body.appendChild(ring);
-
-    let x = window.innerWidth / 2,
-      y = window.innerHeight / 2;
-    let rx = x,
-      ry = y;
-    let raf = 0;
-
-    const move = (e: PointerEvent) => {
-      x = e.clientX;
-      y = e.clientY;
-      if (!raf) loop();
-    };
-    const loop = () => {
-      rx += (x - rx) * 0.18;
-      ry += (y - ry) * 0.18;
-      dot.style.transform = `translate(${x}px, ${y}px)`;
-      ring.style.transform = `translate(${rx}px, ${ry}px)`;
-      raf = requestAnimationFrame(loop);
-      if (Math.abs(x - rx) < 0.1 && Math.abs(y - ry) < 0.1) {
-        cancelAnimationFrame(raf);
-        raf = 0;
-      }
-    };
-
-    const interactive = "a,button,[role='button'],.btn-primary,.btn-ghost,.btn-line,.select-btn";
-    const onOver = (e: Event) => {
-      const t = e.target as Element | null;
-      if (t && (t.closest(interactive) || (t as HTMLElement).tabIndex >= 0)) {
-        root.setAttribute("data-cursor", "hover");
-      }
-    };
-    const onOut = () => root.removeAttribute("data-cursor");
-
-    window.addEventListener("pointermove", move, { passive: true });
-    document.addEventListener("mouseover", onOver);
-    document.addEventListener("mouseout", onOut);
-
-    return () => {
-      window.removeEventListener("pointermove", move);
-      document.removeEventListener("mouseover", onOver);
-      document.removeEventListener("mouseout", onOut);
-      dot.remove();
-      ring.remove();
-      cancelAnimationFrame(raf);
-    };
-  }, []);
-
-  return null;
-}
-
-/* =========================
    UI helpers
 ========================= */
 
@@ -129,77 +64,15 @@ function FrameCard({
   children,
   className = "",
   glow = false,
-  as: Tag = "div",
 }: {
   children: React.ReactNode;
   className?: string;
   glow?: boolean;
-  as?: any;
 }) {
-  // ВАЖНО: h-full + flex-col внутри, чтобы кнопка Apply ровно выравнивалась внизу
   return (
-    <Tag className={`frame ${glow ? "frame-glow" : ""} ${className}`}>
-      <div className="frame-inner h-full flex flex-col">{children}</div>
-    </Tag>
-  );
-}
-
-/* =========================
-   Custom SVG ₿ coin (embossed, neat)
-========================= */
-
-function BTCCoin({ className = "" }: { className?: string }) {
-  // компактная и аккуратная монета, без “текста-шрифта”, но с читаемым ₿
-  return (
-    <svg className={className} viewBox="0 0 64 64" aria-hidden focusable="false">
-      <defs>
-        <radialGradient id="coinFace" cx="30%" cy="25%" r="75%">
-          <stop offset="0%" stopColor="rgba(255,255,255,.28)" />
-          <stop offset="55%" stopColor="rgba(255,224,160,.08)" />
-          <stop offset="100%" stopColor="rgba(0,0,0,.25)" />
-        </radialGradient>
-        <linearGradient id="coinGold" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#fff2bf" />
-          <stop offset="42%" stopColor="#ffd35a" />
-          <stop offset="100%" stopColor="#ffb800" />
-        </linearGradient>
-      </defs>
-
-      {/* rim */}
-      <circle cx="32" cy="32" r="30" fill="url(#coinFace)" />
-      {/* face subtle inner */}
-      <circle cx="32" cy="32" r="23" fill="rgba(0,0,0,.05)" />
-      {/* bottom micro shade */}
-      <ellipse cx="32" cy="40" rx="18" ry="8" fill="rgba(0,0,0,.14)" />
-      {/* ₿ simplified shape (stroke + fill) */}
-      <g transform="translate(32 32)">
-        <path
-          d="M-6 -12h7.5c3.8 0 6.5 2 6.5 5c0 2.1-1.1 3.6-3 4.4c2.4.8 3.9 2.6 3.9 5.1c0 3.5-2.9 5.5-7.2 5.5H-6"
-          fill="none"
-          stroke="#1a1400"
-          strokeWidth="4.5"
-          strokeLinecap="round"
-        />
-        <path
-          d="M-6 -12h7.5c3.8 0 6.5 2 6.5 5c0 2.1-1.1 3.6-3 4.4c2.4.8 3.9 2.6 3.9 5.1c0 3.5-2.9 5.5-7.2 5.5H-6"
-          fill="none"
-          stroke="url(#coinGold)"
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-        {/* vertical stem */}
-        <path d="M-6 -12v24" stroke="url(#coinGold)" strokeWidth="3" strokeLinecap="round" />
-        {/* little top/bottom notches (stylized) */}
-        <path d="M2 -12v3 M2 9v3" stroke="url(#coinGold)" strokeWidth="3" strokeLinecap="round" />
-      </g>
-      {/* specular */}
-      <path
-        d="M10 14c6-5 14-8 22-8"
-        stroke="rgba(255,255,255,.35)"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
+    <div className={`frame ${glow ? "frame-glow" : ""} ${className}`}>
+      <div className="frame-inner">{children}</div>
+    </div>
   );
 }
 
@@ -325,7 +198,6 @@ const tiers = [
       "Permanent DAO council seat",
       "Revenue share from network fees",
     ],
-    accent: "from-yellow-500 to-amber-500",
     badge: "Top Tier",
   },
   {
@@ -338,7 +210,6 @@ const tiers = [
       "Enhanced yields in staking projects",
       "Access to insights and private analytics",
     ],
-    accent: "from-amber-500 to-orange-500",
     badge: "Pro",
   },
   {
@@ -346,7 +217,6 @@ const tiers = [
     min: "From 0.01 BTC",
     equity: null as string | null,
     perks: ["x2 $PETB Airdrop", "Bonus conditions for future grant rounds"],
-    accent: "from-amber-300 to-lime-400",
     badge: "Early",
   },
 ] as const;
@@ -383,11 +253,11 @@ const Nav = () => (
   </nav>
 );
 
-/* ===== HERO: усиленная типографика + gold underline + sparks ===== */
+/* ===== HERO: чистая типографика awwwards ===== */
 function Hero(): JSX.Element {
   const ref = React.useRef<HTMLElement | null>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  const yTitle = useTransform(scrollYProgress, [0, 1], [0, -80]);
+  const yTitle = useTransform(scrollYProgress, [0, 1], [0, -60]);
   const yTitleSpring = useSpring(yTitle, { stiffness: 80, damping: 20 });
 
   return (
@@ -403,12 +273,12 @@ function Hero(): JSX.Element {
           style={{ y: yTitleSpring }}
           className="hero-title"
         >
-          <span className="hero-line hero-bitcoin">The future of Bitcoin</span>
-          <span className="hero-line hero-by">powered by Peter Todd</span>
-          <span className="hero-underline" aria-hidden />
+          <span className="block">The future of <span className="hero-accent">Bitcoin</span></span>
+          <span className="hero-sub">powered by Peter Todd</span>
         </motion.h1>
 
-        <p className="hero-lead">
+        <p className="hero-copy">
+          <span className="copy-accent" aria-hidden />
           Investments and strategic support: Peter Todd Bitcoin is launching a next-generation blockchain,
           offering a limited circle of investors a unique opportunity to become co-owners of the project.
           Every contribution is recorded on-chain, ensuring transparency and legal integrity.
@@ -426,11 +296,6 @@ function Hero(): JSX.Element {
           <span className="inline-flex items-center gap-2"><Zap className="h-4 w-4" aria-hidden /> High-throughput L1</span>
           <span className="inline-flex items-center gap-2"><PieChart className="h-4 w-4" aria-hidden /> DAO Governance</span>
         </div>
-
-        {/* subtle floating sparks */}
-        <i className="hero-spark s1" aria-hidden />
-        <i className="hero-spark s2" aria-hidden />
-        <i className="hero-spark s3" aria-hidden />
       </div>
     </section>
   );
@@ -502,33 +367,33 @@ const Tiers = () => (
             className="h-full"
           >
             <FrameCard className="h-full">
-              {/* ВНУТРИ уже flex-col и h-full благодаря FrameCard */}
-              <div className="flex items-center justify-between">
-                <div className="inline-flex items-center gap-3">
-                  <div className={`icon-coin bg-gradient-to-br ${t.accent}`}>
-                    <BTCCoin className="coin-btc" />
+              <div className="flex h-full flex-col">
+                <div className="flex items-center justify-between">
+                  <div className="inline-flex items-center gap-3">
+                    <div className="icon-coin">
+                      <span className="coin-glyph" aria-hidden>₿</span>
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold text-white">{t.name}</h3>
                   </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-white">{t.name}</h3>
+                  <span className="chip">{t.badge}</span>
                 </div>
-                <span className="chip">{t.badge}</span>
-              </div>
 
-              <div className="mt-4 text-white/85">
-                <div className="mini-k uppercase">Minimum</div>
-                <div className="text-lg font-semibold">{t.min}</div>
-                {t.equity && <div className="equity">{t.equity}</div>}
-                <ul className="mt-5 space-y-3">
-                  {t.perks.map((p) => (
-                    <li key={p} className="flex items-start gap-3"><span className="bullet" /> {p}</li>
-                  ))}
-                </ul>
-              </div>
+                <div className="mt-4 text-white/85">
+                  <div className="mini-k uppercase">Minimum</div>
+                  <div className="text-lg font-semibold">{t.min}</div>
+                  {t.equity && <div className="equity">{t.equity}</div>}
+                  <ul className="mt-5 space-y-3">
+                    {t.perks.map((p) => (
+                      <li key={p} className="flex items-start gap-3"><span className="bullet" /> {p}</li>
+                    ))}
+                  </ul>
+                </div>
 
-              {/* ВЫРАВНИВАНИЕ Apply ВНИЗУ */}
-              <div className="mt-auto pt-6">
-                <a href="#apply" className="btn-line inline-flex items-center">
-                  Apply <ArrowRight className="h-4 w-4 ml-2" />
-                </a>
+                <div className="mt-auto pt-6">
+                  <a href="#apply" className="btn-line inline-flex items-center">
+                    Apply <ArrowRight className="h-4 w-4 ml-2" />
+                  </a>
+                </div>
               </div>
             </FrameCard>
           </motion.div>
@@ -749,7 +614,6 @@ export default function Page(): JSX.Element {
   return (
     <div className="min-h-screen body-bg text-white relative overflow-x-hidden">
       <Background />
-      <CursorBitcoin />
       <Nav />
       <Hero />
       <section id="vision-anchor">
