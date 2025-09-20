@@ -1,21 +1,18 @@
-/* Tailwind layers (оставь, если уже есть в файле) */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Базовые кастомки (можно оставить как есть у тебя) */
 html, body { height: 100%; }
 
-/* ===== Awwwards/Bitcoin background layers ===== */
+/* ===== Core background (grid + rings + noise) ===== */
 :root {
-  --bg0: #0e0d0a;          /* базовый фон */
+  --bg0: #0e0d0a;
   --ring: rgba(255, 200, 0, 0.10);
   --grid: rgba(255, 255, 255, 0.06);
 }
 
 .body-bg {
   background:
-    /* conic bitcoin rings */
     radial-gradient(1200px 1200px at 20% -10%, rgba(255, 200, 0, .08), transparent 60%),
     conic-gradient(from 0deg at 70% 20%, rgba(255, 200, 0, .12), transparent 20% 60%, rgba(255, 200, 0, .12)),
     radial-gradient(800px 500px at 80% 10%, rgba(255, 175, 0, .12), transparent 70%),
@@ -23,7 +20,6 @@ html, body { height: 100%; }
     var(--bg0);
 }
 
-/* subtle grid */
 .bg-grid {
   position: fixed;
   inset: 0;
@@ -36,7 +32,6 @@ html, body { height: 100%; }
   z-index: 0;
 }
 
-/* soft rings */
 .bg-rings::before,
 .bg-rings::after {
   content: "";
@@ -57,7 +52,6 @@ html, body { height: 100%; }
   mix-blend-mode: screen;
 }
 
-/* film noise */
 .bg-noise {
   position: fixed;
   inset: 0;
@@ -70,72 +64,7 @@ html, body { height: 100%; }
 <rect width='100%' height='100%' filter='url(%23n)' opacity='0.8'/></svg>");
 }
 
-/* header/footer glass tweak */
-.glass {
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  background-color: rgba(255,255,255,0.05);
-  border-bottom: 1px solid rgba(255,255,255,0.10);
-}
-
-/* ===== Wordmark (вариант 2) ===== */
-.wordmark2 { position: relative; }
-
-.wordmark2 .wm2-main{
-  /* динамичный “золотой” градиент c мягким бликом */
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  background-image:
-    radial-gradient(120% 180% at 10% 0%, rgba(255,255,255,.35), transparent 40%),
-    linear-gradient(90deg, #ffe089 0%, #ffd35a 35%, #ffb800 60%, #ffd35a 85%, #ffe089 100%);
-  background-size: 220% 220%;
-  animation: wm2-shine 6s linear infinite;
-  letter-spacing: -0.01em;
-  filter: drop-shadow(0 1px 0 rgba(0,0,0,.25));
-}
-@keyframes wm2-shine {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
-}
-
-.wordmark2 .wm2-sub{
-  /* техничный капс с обводкой — читабельно и “премиум” */
-  text-transform: uppercase;
-  letter-spacing: .18em;
-  color: transparent;
-  -webkit-text-stroke: 1px rgba(255, 232, 160, .85);
-  text-shadow:
-    0 0 12px rgba(255, 200, 0, .08),
-    0 0 24px rgba(255, 200, 0, .04);
-  position: relative;
-}
-
-/* тонкий вертикальный разделитель */
-.wordmark2 .wm2-divider{
-  width: 1px;
-  height: 1.1em;
-  background: linear-gradient(180deg, rgba(255,224,138,.85), rgba(255,184,0,.6));
-  opacity: .8;
-  transform: translateY(.08em);
-}
-
-/* hover-эффект */
-nav a:hover .wordmark2 .wm2-main{
-  filter: drop-shadow(0 2px 10px rgba(255, 200, 0, .22));
-}
-nav a:hover .wordmark2 .wm2-sub{
-  -webkit-text-stroke: 1.1px rgba(255, 235, 170, .95);
-}
-
-/* доступность: без анимаций при reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  .wordmark2 .wm2-main { animation: none; }
-}
-
 /* ===== Extra awwwards background layers ===== */
-
-/* плавная "полоса-аврора" с конусным градиентом */
 .bg-aurora{
   position: fixed;
   inset: -10% -5% 0 -5%;
@@ -152,7 +81,6 @@ nav a:hover .wordmark2 .wm2-sub{
   100% { transform: translate3d(0,-3%,0) rotate(2deg); }
 }
 
-/* две "парящие" сферы с медленной анимацией */
 .bg-orb{
   position: fixed;
   border-radius: 9999px;
@@ -179,13 +107,13 @@ nav a:hover .wordmark2 .wm2-sub{
   100% { transform: translateY(0) translateX(0); }
 }
 
-/* курсорный "свет" (поверх сетки/колец, но под контентом) */
+/* spotlight that follows cursor */
 .mouse-spotlight{
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 2;
-  --mx: 50vw; /* по умолчанию центр */
+  --mx: 50vw;
   --my: 40vh;
   background:
     radial-gradient(420px 420px at var(--mx) var(--my), rgba(255,200,0,.08), transparent 60%),
@@ -193,20 +121,111 @@ nav a:hover .wordmark2 .wm2-sub{
   mix-blend-mode: screen;
 }
 
-/* ===== Mobile адаптация фоновых эффектов ===== */
+/* ===== Header glass ===== */
+.glass {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+}
+
+/* ===== Kinetic hero heading ===== */
+.kinetic-heading {
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(0,0,0,.25);
+}
+.heading-gradient {
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-image: linear-gradient(90deg, #ffe089 0%, #ffd35a 35%, #ffb800 60%, #ffd35a 85%, #ffe089 100%);
+  filter: drop-shadow(0 2px 8px rgba(255,200,0,.25));
+}
+
+/* marquee line */
+.marquee {
+  position: relative;
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+}
+.marquee__inner {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 18s linear infinite;
+  color: rgba(255, 240, 200, .7);
+  letter-spacing: .06em;
+  font-size: .8rem;
+}
+.marquee__inner span { margin-right: .75rem; }
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* ===== Wordmark (variant 2) ===== */
+.wordmark2 { position: relative; }
+.wordmark2 .wm2-main{
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-image:
+    radial-gradient(120% 180% at 10% 0%, rgba(255,255,255,.35), transparent 40%),
+    linear-gradient(90deg, #ffe089 0%, #ffd35a 35%, #ffb800 60%, #ffd35a 85%, #ffe089 100%);
+  background-size: 220% 220%;
+  animation: wm2-shine 6s linear infinite;
+  letter-spacing: -0.01em;
+  filter: drop-shadow(0 1px 0 rgba(0,0,0,.25));
+}
+@keyframes wm2-shine {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.wordmark2 .wm2-sub{
+  text-transform: uppercase;
+  letter-spacing: .18em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(255, 232, 160, .85);
+  text-shadow:
+    0 0 12px rgba(255, 200, 0, .08),
+    0 0 24px rgba(255, 200, 0, .04);
+  position: relative;
+}
+.wordmark2 .wm2-divider{
+  width: 1px; height: 1.1em;
+  background: linear-gradient(180deg, rgba(255,224,138,.85), rgba(255,184,0,.6));
+  opacity: .8;
+  transform: translateY(.08em);
+}
+nav a:hover .wordmark2 .wm2-main{
+  filter: drop-shadow(0 2px 10px rgba(255, 200, 0, .22));
+}
+nav a:hover .wordmark2 .wm2-sub{
+  -webkit-text-stroke: 1.1px rgba(255, 235, 170, .95);
+}
+
+/* ===== Tilt cards ===== */
+.tilt-wrap { perspective: 1200px; }
+.tilt {
+  will-change: transform;
+  transform-style: preserve-3d;
+  transition: transform .18s ease-out;
+}
+
+/* ===== Mobile tuning ===== */
 @media (max-width: 640px){
   .bg-grid { background-size: 28px 28px; }
   .bg-orb.o1 { width: 240px; height: 240px; left: -90px; top: 26%; opacity: .14; filter: blur(26px); }
   .bg-orb.o2 { width: 180px; height: 180px; right: -60px; top: 70%; opacity: .14; filter: blur(24px); }
   .bg-aurora { filter: blur(18px) saturate(110%); }
+  .marquee__inner { font-size: .72rem; }
 }
 
-/* отключаем spotlight на тач-экранах */
+/* disable spotlight on touch */
 @media (pointer: coarse) {
   .mouse-spotlight { display: none; }
 }
 
-/* уважение к reduced motion */
+/* reduced motion respect */
 @media (prefers-reduced-motion: reduce){
-  .bg-aurora, .bg-orb.o1, .bg-orb.o2{ animation: none; }
+  .bg-aurora, .bg-orb.o1, .bg-orb.o2, .marquee__inner, .wordmark2 .wm2-main { animation: none; }
 }
