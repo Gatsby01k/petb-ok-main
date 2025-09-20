@@ -11,14 +11,13 @@
   --gold-a:#ffe089;
   --gold-b:#ffb800;
 }
-
 html, body { height: 100%; }
 
 /* Prefer P3 where available for smoother golds */
 @supports (color: color(display-p3 1 1 1)) {
   :root{
     --gold-a: color(display-p3 1 0.88 0.63);
-    --gold-b: color(display-p3 1 0.72 0.1);
+    --gold-b: color(display-p3 1 0.72 0.10);
   }
 }
 
@@ -32,27 +31,30 @@ html, body { height: 100%; }
     var(--bg0);
 }
 
-/* grid / rings / noise layers */
+/* grid / rings / noise */
 .bg-grid{
   position:fixed; inset:0; pointer-events:none; z-index:0;
   background-image:
     linear-gradient(to right, var(--grid) 1px, transparent 1px),
     linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
   background-size:40px 40px;
-  /* Add Safari compatibility for masking */
   -webkit-mask-image: radial-gradient(80% 80% at 50% 50%, #000 55%, transparent 100%);
   mask-image: radial-gradient(80% 80% at 50% 50%, #000 55%, transparent 100%);
 }
-.bg-rings::before,.bg-rings::after{ content:""; position:fixed; inset:0; pointer-events:none; z-index:0; }
+.bg-rings::before,
+.bg-rings::after{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+}
 .bg-rings::before{
   background:
     radial-gradient(600px 600px at 35% 35%, var(--ring), transparent 60%),
     radial-gradient(450px 450px at 75% 25%, var(--ring), transparent 60%);
   mix-blend-mode: screen;
 }
-.bg-rings::after{ background: radial-gradient(700px 700px at 50% 85%, rgba(255,180,0,.08), transparent 60%); mix-blend-mode:screen; }
-
-/* SVG noise: keep lightweight and cacheable */
+.bg-rings::after{
+  background: radial-gradient(700px 700px at 50% 85%, rgba(255,180,0,.08), transparent 60%);
+  mix-blend-mode: screen;
+}
 .bg-noise{
   position:fixed; inset:0; pointer-events:none; z-index:1; opacity:.07;
   background-image:url("data:image/svg+xml;utf8,\
@@ -61,8 +63,6 @@ html, body { height: 100%; }
 <rect width='100%' height='100%' filter='url(%23n)' opacity='0.8'/></svg>");
   image-rendering: pixelated;
 }
-
-/* aurora + orbs */
 .bg-aurora{
   position:fixed; inset:-10% -5% 0 -5%; pointer-events:none; z-index:0;
   background:
@@ -71,39 +71,24 @@ html, body { height: 100%; }
   filter: blur(22px) saturate(120%);
   animation: aurora-shift 18s linear infinite alternate;
 }
-@keyframes aurora-shift{ 0%{transform:translate3d(0,0,0) rotate(.001deg);} 100%{transform:translate3d(0,-3%,0) rotate(2deg);} }
-.bg-orb{ position:fixed; border-radius:9999px; filter:blur(32px); opacity:.18; pointer-events:none; z-index:0; }
-.bg-orb.o1{ width:420px; height:420px; left:-120px; top:22%; background:radial-gradient(circle at 30% 30%, rgba(255,200,0,.35), rgba(255,160,0,.10) 60%, transparent 70%); animation:orb-float 22s ease-in-out infinite; }
-.bg-orb.o2{ width:320px; height:320px; right:-100px; top:62%; background:radial-gradient(circle at 60% 40%, rgba(255,230,120,.28), rgba(255,180,0,.10) 60%, transparent 70%); animation:orb-float 26s ease-in-out infinite reverse; }
-@keyframes orb-float{ 0%{transform:translateY(0) translateX(0);} 50%{transform:translateY(-4%) translateX(2%);} 100%{transform:translateY(0) translateX(0);} }
-
-/* ===== Cursor sheen (diagonal) ===== */
-.mouse-sheen{
-  position:fixed; inset:0; pointer-events:none; z-index:2;
-  --mx:50vw; --my:40vh;
-  overflow:hidden;
-  contain: layout paint style;
+.bg-orb{
+  position:fixed; border-radius:9999px; filter:blur(32px); opacity:.18; pointer-events:none; z-index:0;
 }
-.mouse-sheen::before{
-  content:""; position:absolute;
-  width:120vw; height:24vw;
-  left: calc(var(--mx) - 60vw);
-  top:  calc(var(--my) - 12vw);
-  transform: rotate(18deg);
-  background:
-    linear-gradient( to right,
-      transparent 0%,
-      rgba(255, 220, 120, .10) 45%,
-      rgba(255, 200, 0, .18) 50%,
-      rgba(255, 220, 120, .10) 55%,
-      transparent 100%
-    );
-  filter: blur(12px) saturate(115%);
-  mix-blend-mode: screen;
-  will-change: left, top;
+.bg-orb.o1{
+  width:420px; height:420px; left:-120px; top:22%;
+  background:radial-gradient(circle at 30% 30%, rgba(255,200,0,.35), rgba(255,160,0,.10) 60%, transparent 70%);
+  animation:orb-float 22s ease-in-out infinite;
 }
+.bg-orb.o2{
+  width:320px; height:320px; right:-100px; top:62%;
+  background:radial-gradient(circle at 60% 40%, rgba(255,230,120,.28), rgba(255,180,0,.10) 60%, transparent 70%);
+  animation:orb-float 26s ease-in-out infinite reverse;
+}
+@keyframes aurora-shift{0%{transform:translate3d(0,0,0) rotate(.001deg);}100%{transform:translate3d(0,-3%,0) rotate(2deg);}}
+@keyframes orb-float{0%{transform:translateY(0) translateX(0);}50%{transform:translateY(-4%) translateX(2%);}100%{transform:translateY(0) translateX(0);}}
 
-@media (pointer: coarse){ .mouse-sheen{ display:none; } }
+/* ===== Cursor sheen (disabled) ===== */
+.mouse-sheen{ display:none !important; }
 
 /* ===== Header (glass) ===== */
 .glass{
@@ -122,9 +107,16 @@ html, body { height: 100%; }
   animation: shine 6s linear infinite;
   letter-spacing:-0.01em; filter: drop-shadow(0 1px 0 rgba(0,0,0,.25));
 }
-.bp-wordmark .bp-sub{ color:transparent; -webkit-text-stroke:1px rgba(255,232,160,.85); text-shadow:0 0 12px rgba(255,200,0,.08), 0 0 24px rgba(255,200,0,.04); }
-.bp-divider{ width:1px; height:1.1em; background:linear-gradient(180deg, rgba(255,224,138,.85), rgba(255,184,0,.6)); opacity:.8; transform:translateY(.08em); }
-@keyframes shine{ 0%{background-position:0% 50%;} 100%{background-position:200% 50%;} }
+.bp-wordmark .bp-sub{
+  color:transparent; -webkit-text-stroke:1px rgba(255,232,160,.85);
+  text-shadow:0 0 12px rgba(255,200,0,.08), 0 0 24px rgba(255,200,0,.04);
+}
+.bp-divider{
+  width:1px; height:1.1em;
+  background:linear-gradient(180deg, rgba(255,224,138,.85), rgba(255,184,0,.6));
+  opacity:.8; transform:translateY(.08em);
+}
+@keyframes shine{0%{background-position:0% 50%;}100%{background-position:200% 50%;}}
 
 /* ₿ badge */
 .btc-badge{
@@ -146,14 +138,16 @@ html, body { height: 100%; }
   background: conic-gradient(from 180deg at 50% 50%, rgba(255,200,0,.35), rgba(100,100,100,.2), rgba(255,200,0,.25), rgba(80,80,80,.2), rgba(255,200,0,.35));
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 10px 32px rgba(0,0,0,.35);
 }
-.frame-glow{ box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 20px 60px rgba(255,200,0,.14), 0 10px 32px rgba(0,0,0,.35); }
+.frame-glow{
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 20px 60px rgba(255,200,0,.14), 0 10px 32px rgba(0,0,0,.35);
+}
 .frame .frame-inner{
   border-radius:21px; background: rgba(20, 19, 14, .66);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   padding: 1.5rem;
 }
 .mini-card{ border:1px solid rgba(255,255,255,.10); border-radius:16px; padding:1rem; background:rgba(255,255,255,.03); }
-.mini-k{ font-size:.8rem; color:rgba(255,255,255,.65); text-transform: none; }
+.mini-k{ font-size:.8rem; color:rgba(255,255,255,.65); }
 .mini-v{ font-size:1.2rem; font-weight:800; margin-top:.25rem; }
 .mini-d{ font-size:.85rem; color:rgba(255,255,255,.75); margin-top:.25rem; }
 .mini-link{ font-size:.75rem; color:#ffd35a; text-decoration:none; }
@@ -173,7 +167,7 @@ html, body { height: 100%; }
 
   .btn-ghost{ @apply rounded-[14px] px-5 py-3 font-bold border text-white; border-color: rgba(255,255,255,.18); background: rgba(255,255,255,.04); }
   .btn-ghost:hover{ background: rgba(255,255,255,.08); }
-  .btn-line{ @apply inline-block pb-[0.2rem] text-white; border-bottom:1px solid rgba(255,255,255,.25); transition:border-color .2s; }
+  .btn-line{ @apply inline-flex items-center pb-[0.2rem] text-white; border-bottom:1px solid rgba(255,255,255,.25); transition:border-color .2s; }
   .btn-line:hover{ border-color:#ffd35a; color:#ffd35a; }
 
   /* Custom Select */
@@ -190,6 +184,24 @@ html, body { height: 100%; }
   .check{ @apply grid place-items-center rounded-md; width:18px; height:18px; border:1px solid rgba(255,255,255,.25); color:transparent; margin-top:.15rem; }
   .check.on{ background: linear-gradient(180deg, var(--gold-a), var(--gold-b)); color:#111; border-color:transparent; }
 }
+
+/* ===== Pro BTC coin icon ===== */
+.icon-coin{
+  position: relative;
+  display: grid; place-items: center;
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.16),
+    inset 0 -1px 0 rgba(0,0,0,.25),
+    0 8px 20px rgba(0,0,0,.35);
+}
+.icon-coin::after{
+  content:""; position:absolute; inset:-1px; border-radius:inherit;
+  background: radial-gradient(120% 120% at 20% 10%, rgba(255,255,255,.16), transparent 60%);
+  mix-blend-mode:screen; pointer-events:none;
+}
+.coin-btc{ width:24px; height:24px; display:block; }
 
 /* ===== Mobile & accessibility ===== */
 @media (max-width:640px){
