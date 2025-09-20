@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { motion, useScroll, useTransform, useSpring, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
   ShieldCheck,
@@ -302,9 +302,10 @@ const Nav = () => (
 /* ===== HERO: чистая типографика awwwards (без линии) ===== */
 function Hero(): JSX.Element {
   const ref = React.useRef<HTMLElement | null>(null);
+  const prefersReducedMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  const yTitle = useTransform(scrollYProgress, [0, 1], [0, -60]);
-  const yTitleSpring = useSpring(yTitle, { stiffness: 80, damping: 20 });
+  const yTitle = prefersReducedMotion ? 0 : useTransform(scrollYProgress, [0, 1], [0, -60]);
+  const yTitleSpring = prefersReducedMotion ? undefined : useSpring(yTitle, { stiffness: 80, damping: 20 });
 
   return (
     <section id="home" ref={ref} className="relative overflow-hidden scroll-mt-24" aria-labelledby="heroTitle">
@@ -314,7 +315,7 @@ function Hero(): JSX.Element {
           <Sparkles className="h-3.5 w-3.5" aria-hidden /> Awwwards-style concept
         </div>
 
-        <motion.h1 id="heroTitle" style={{ y: yTitleSpring }} className="hero-title">
+        <motion.h1 id="heroTitle" style={prefersReducedMotion ? undefined : { y: yTitleSpring }} className="hero-title">
           <span className="block">The future of <span className="hero-accent">Bitcoin</span></span>
           <span className="hero-sub">powered by Peter Todd</span>
         </motion.h1>
@@ -455,7 +456,7 @@ const OnChain = () => (
   <section id="onchain" className="relative py-16 md:py-24 scroll-mt-24">
     <div className="mx-auto max-w-7xl px-4 sm:px-6 grid lg:grid-cols-2 gap-6 md:gap-8 items-center">
       <FrameCard glow>
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-white">On-chain Confirmations</h2>
+        <h2 className="text-2xl sm:text-3xl font-exTrabold text-white">On-chain Confirmations</h2>
         <p className="mt-3 text-white/85">Every contribution is tied to a transaction. Public registries and Merkle proofs confirm participation.</p>
         <div className="mt-6 grid sm:grid-cols-3 gap-4 text-white/85">
           {["TX Explorer", "DAO Snapshot", "Audit Trail"].map((k) => (
@@ -551,12 +552,12 @@ const Apply = () => {
 
               <div className="sm:col-span-1">
                 <label htmlFor="fullName" className="label">Full name</label>
-                <input id="fullName" name="fullName" required placeholder="Satoshi Nakamoto" className="input" />
+                <input id="fullName" name="fullName" required autoComplete="name" placeholder="Satoshi Nakamoto" className="input" />
               </div>
 
               <div className="sm:col-span-1">
                 <label htmlFor="email" className="label">Email</label>
-                <input id="email" name="email" type="email" required inputMode="email" placeholder="you@domain.com" className="input" />
+                <input id="email" name="email" type="email" required inputMode="email" autoComplete="email" placeholder="you@domain.com" className="input" />
               </div>
 
               <div className="sm:col-span-1">
@@ -586,12 +587,13 @@ const Apply = () => {
               </div>
 
               {error && (
-                <div role="alert" className="sm:col-span-2 text-sm text-red-200 bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+                <div role="alert" className="sm:col-span-2 alert-error">
                   <strong className="font-semibold">Error:</strong> {error}
                 </div>
               )}
               {ok && (
-                <div role="status" className="sm:col-span-2 text-sm text-emerald-200 bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3">
+                <div role="status" className="sm:col-span-2 alert-success">
+                  <Check className="h-4 w-4" aria-hidden />
                   Application sent. We'll contact you soon.
                 </div>
               )}
