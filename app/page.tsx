@@ -225,7 +225,6 @@ const tiers = [
 ========================= */
 
 const SocialLinks = () => {
-  // отдельный X-логотип — тонкие перекрестные линии (чтобы не тянуть внешние наборы)
   const XMark = () => (
     <svg viewBox="0 0 24 24" aria-hidden className="social-svg">
       <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
@@ -268,6 +267,77 @@ const ContactRow = () => (
 );
 
 /* =========================
+   Modal (animated)
+========================= */
+function Modal({
+  open,
+  onClose,
+  title,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <motion.div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      initial={false}
+      animate={open ? "open" : "closed"}
+      variants={{
+        open: { pointerEvents: "auto" },
+        closed: { pointerEvents: "none" },
+      }}
+    >
+      {/* Backdrop */}
+      <motion.button
+        type="button"
+        aria-label="Close"
+        onClick={onClose}
+        className="absolute inset-0 w-full h-full bg-black/60 backdrop-blur-sm"
+        variants={{
+          open: { opacity: 1 },
+          closed: { opacity: 0 },
+        }}
+        transition={{ duration: 0.18, ease: "easeOut" }}
+      />
+
+      {/* Card */}
+      <motion.div
+        className="relative max-w-lg w-full mx-4"
+        variants={{
+          open: { opacity: 1, y: 0, scale: 1 },
+          closed: { opacity: 0, y: 8, scale: 0.98 },
+        }}
+        transition={{ duration: 0.22, ease: "easeOut" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <FrameCard glow>
+          <div className="flex justify-between items-start">
+            <h2 id="modal-title" className="text-xl font-bold text-white">
+              {title}
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-white/70 hover:text-white text-2xl leading-none"
+            >
+              ×
+            </button>
+          </div>
+          <div className="mt-4 text-white/85 text-sm space-y-4">
+            {children}
+          </div>
+        </FrameCard>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/* =========================
    NAV / HERO / SECTIONS / FOOTER
 ========================= */
 
@@ -299,7 +369,7 @@ const Nav = () => (
   </nav>
 );
 
-/* ===== HERO: чистая типографика awwwards (без линии) ===== */
+/* ===== HERO ===== */
 function Hero(): JSX.Element {
   const ref = React.useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
@@ -320,7 +390,6 @@ function Hero(): JSX.Element {
           <span className="hero-sub">powered by Peter Todd</span>
         </motion.h1>
 
-        {/* Интро — без боковой линии, аккуратный awwwards-стиль */}
         <p className="hero-copy">
           Investments and strategic support: Peter Todd Bitcoin is launching a next-generation blockchain,
           offering a limited circle of investors a unique opportunity to become co-owners of the project.
@@ -334,7 +403,6 @@ function Hero(): JSX.Element {
           <a href="#tiers" className="btn-ghost">View Tiers</a>
         </div>
 
-        {/* Соцсети + Почты */}
         <div className="mt-7 sm:mt-9 flex flex-col items-center gap-4">
           <SocialLinks />
           <ContactRow />
@@ -456,7 +524,7 @@ const OnChain = () => (
   <section id="onchain" className="relative py-16 md:py-24 scroll-mt-24">
     <div className="mx-auto max-w-7xl px-4 sm:px-6 grid lg:grid-cols-2 gap-6 md:gap-8 items-center">
       <FrameCard glow>
-        <h2 className="text-2xl sm:text-3xl font-exTrabold text-white">On-chain Confirmations</h2>
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-white">On-chain Confirmations</h2>
         <p className="mt-3 text-white/85">Every contribution is tied to a transaction. Public registries and Merkle proofs confirm participation.</p>
         <div className="mt-6 grid sm:grid-cols-3 gap-4 text-white/85">
           {["TX Explorer", "DAO Snapshot", "Audit Trail"].map((k) => (
@@ -642,23 +710,48 @@ const FAQ = () => (
   </section>
 );
 
-const Footer = () => (
-  <footer className="relative py-10 border-t border-white/10">
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-white/75 text-sm">
-      <a href="#home" className="flex items-center gap-3 hover:text-white transition">
-        <BTCBadge className="h-9 w-9" />
-        <WordmarkBP />
-      </a>
-      <div className="flex items-center gap-6">
-        <a href="#" className="hover:text-white transition">Terms</a>
-        <a href="#" className="hover:text-white transition">Privacy</a>
-        <a href="#" className="hover:text-white transition">Imprint</a>
-        <span className="text-white/60">© {new Date().getFullYear()}</span>
+const Footer = () => {
+  const [modal, setModal] = React.useState<null | "terms" | "privacy" | "imprint">(null);
+
+  return (
+    <footer className="relative py-10 border-t border-white/10">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-white/75 text-sm">
+        <a href="#home" className="flex items-center gap-3 hover:text-white transition">
+          <BTCBadge className="h-9 w-9" />
+          <WordmarkBP />
+        </a>
+        <div className="flex items-center gap-6">
+          <button onClick={() => setModal("terms")} className="hover:text-white transition">Terms</button>
+          <button onClick={() => setModal("privacy")} className="hover:text-white transition">Privacy</button>
+          <button onClick={() => setModal("imprint")} className="hover:text-white transition">Imprint</button>
+          <span className="text-white/60">© {new Date().getFullYear()}</span>
+        </div>
       </div>
-    </div>
-    <div className="pb-[env(safe-area-inset-bottom)]" />
-  </footer>
-);
+
+      {/* TERMS */}
+      <Modal open={modal === "terms"} onClose={() => setModal(null)} title="Terms of Participation">
+        <p>Participation is available through our whitelist. Allocations and rewards are recorded on-chain and reflected in your investor dashboard.</p>
+        <p>By submitting an application you confirm your intent to participate and agree to project tokenomics and DAO governance.</p>
+      </Modal>
+
+      {/* PRIVACY */}
+      <Modal open={modal === "privacy"} onClose={() => setModal(null)} title="Privacy Policy">
+        <p>We collect data needed for whitelist onboarding and communications. Data is stored securely and not shared beyond operational needs.</p>
+        <p>Contact <a href="mailto:info@bitcoinpetertodd.com" className="text-yellow-300">info@bitcoinpetertodd.com</a> to request access or removal.</p>
+      </Modal>
+
+      {/* IMPRINT */}
+      <Modal open={modal === "imprint"} onClose={() => setModal(null)} title="Imprint">
+        <p><strong>Peter Todd Bitcoin</strong><br/>Blockchain Innovation & Strategic Investments</p>
+        <p>
+          Contact: <a href="mailto:info@bitcoinpetertodd.com" className="text-yellow-300">info@bitcoinpetertodd.com</a><br/>
+          Investors: <a href="mailto:invest@bitcoinpetertodd.com" className="text-yellow-300">invest@bitcoinpetertodd.com</a>
+        </p>
+        <p>Telegram: <a href="https://t.me/PeterTodd_Bitcoin" target="_blank" className="text-yellow-300" rel="noreferrer">t.me/PeterTodd_Bitcoin</a></p>
+      </Modal>
+    </footer>
+  );
+};
 
 export default function Page(): JSX.Element {
   return (
