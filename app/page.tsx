@@ -9,9 +9,6 @@ import {
   PieChart,
   ChevronDown,
   Check,
-  Crown,
-  Star,
-  Coins,
 } from "lucide-react";
 
 /* =========================
@@ -60,6 +57,71 @@ function Background() {
 }
 
 /* =========================
+   GLOBAL CURSOR — bitcoin ring (awwwards-style)
+========================= */
+function CursorBitcoin(): JSX.Element | null {
+  React.useEffect(() => {
+    if (window.matchMedia("(pointer: coarse)").matches) return; // skip touch
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const root = document.documentElement;
+    const dot = document.createElement("div");
+    const ring = document.createElement("div");
+    dot.className = "btc-cursor-dot";
+    ring.className = "btc-cursor-ring";
+    document.body.appendChild(dot);
+    document.body.appendChild(ring);
+
+    let x = window.innerWidth / 2,
+      y = window.innerHeight / 2;
+    let rx = x,
+      ry = y;
+    let raf = 0;
+
+    const move = (e: PointerEvent) => {
+      x = e.clientX;
+      y = e.clientY;
+      if (!raf) loop();
+    };
+    const loop = () => {
+      rx += (x - rx) * 0.18;
+      ry += (y - ry) * 0.18;
+      dot.style.transform = `translate(${x}px, ${y}px)`;
+      ring.style.transform = `translate(${rx}px, ${ry}px)`;
+      raf = requestAnimationFrame(loop);
+      if (Math.abs(x - rx) < 0.1 && Math.abs(y - ry) < 0.1) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    };
+
+    const interactive = "a,button,[role='button'],.btn-primary,.btn-ghost,.btn-line,.select-btn";
+    const onOver = (e: Event) => {
+      const t = e.target as Element | null;
+      if (t && (t.closest(interactive) || (t as HTMLElement).tabIndex >= 0)) {
+        root.setAttribute("data-cursor", "hover");
+      }
+    };
+    const onOut = () => root.removeAttribute("data-cursor");
+
+    window.addEventListener("pointermove", move, { passive: true });
+    document.addEventListener("mouseover", onOver);
+    document.addEventListener("mouseout", onOut);
+
+    return () => {
+      window.removeEventListener("pointermove", move);
+      document.removeEventListener("mouseover", onOver);
+      document.removeEventListener("mouseout", onOut);
+      dot.remove();
+      ring.remove();
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  return null;
+}
+
+/* =========================
    UI helpers
 ========================= */
 
@@ -67,56 +129,76 @@ function FrameCard({
   children,
   className = "",
   glow = false,
+  as: Tag = "div",
 }: {
   children: React.ReactNode;
   className?: string;
   glow?: boolean;
+  as?: any;
 }) {
+  // ВАЖНО: h-full + flex-col внутри, чтобы кнопка Apply ровно выравнивалась внизу
   return (
-    <div className={`frame ${glow ? "frame-glow" : ""} ${className}`}>
-      <div className="frame-inner">{children}</div>
-    </div>
+    <Tag className={`frame ${glow ? "frame-glow" : ""} ${className}`}>
+      <div className="frame-inner h-full flex flex-col">{children}</div>
+    </Tag>
   );
 }
 
 /* =========================
-   Custom SVG ₿ coin (embossed)
+   Custom SVG ₿ coin (embossed, neat)
 ========================= */
 
-function BTCGlyphIcon({ className = "" }: { className?: string }) {
+function BTCCoin({ className = "" }: { className?: string }) {
+  // компактная и аккуратная монета, без “текста-шрифта”, но с читаемым ₿
   return (
     <svg className={className} viewBox="0 0 64 64" aria-hidden focusable="false">
       <defs>
-        <linearGradient id="btcG" x1="0" y1="0" x2="0" y2="1">
+        <radialGradient id="coinFace" cx="30%" cy="25%" r="75%">
+          <stop offset="0%" stopColor="rgba(255,255,255,.28)" />
+          <stop offset="55%" stopColor="rgba(255,224,160,.08)" />
+          <stop offset="100%" stopColor="rgba(0,0,0,.25)" />
+        </radialGradient>
+        <linearGradient id="coinGold" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#fff2bf" />
-          <stop offset="45%" stopColor="#ffd35a" />
+          <stop offset="42%" stopColor="#ffd35a" />
           <stop offset="100%" stopColor="#ffb800" />
         </linearGradient>
-        <radialGradient id="rimG" cx="30%" cy="25%" r="70%">
-          <stop offset="0%" stopColor="rgba(255,255,255,.28)" />
-          <stop offset="60%" stopColor="rgba(255,255,255,.08)" />
-          <stop offset="100%" stopColor="rgba(0,0,0,.20)" />
-        </radialGradient>
       </defs>
-      {/* rim & face */}
-      <circle cx="32" cy="32" r="30" fill="url(#rimG)" opacity=".6" />
-      <circle cx="32" cy="32" r="22" fill="rgba(0,0,0,.06)" />
-      {/* micro Y-shade (bottom) */}
-      <rect x="6" y="34" width="52" height="16" rx="8" fill="rgba(0,0,0,.12)" />
-      {/* ₿ glyph */}
-      <text
-        x="32"
-        y="40"
-        textAnchor="middle"
-        fontSize="34"
-        fontWeight={900}
-        fill="url(#btcG)"
-        paintOrder="stroke"
-        stroke="#1a1400"
-        strokeWidth={1.5}
-      >
-        ₿
-      </text>
+
+      {/* rim */}
+      <circle cx="32" cy="32" r="30" fill="url(#coinFace)" />
+      {/* face subtle inner */}
+      <circle cx="32" cy="32" r="23" fill="rgba(0,0,0,.05)" />
+      {/* bottom micro shade */}
+      <ellipse cx="32" cy="40" rx="18" ry="8" fill="rgba(0,0,0,.14)" />
+      {/* ₿ simplified shape (stroke + fill) */}
+      <g transform="translate(32 32)">
+        <path
+          d="M-6 -12h7.5c3.8 0 6.5 2 6.5 5c0 2.1-1.1 3.6-3 4.4c2.4.8 3.9 2.6 3.9 5.1c0 3.5-2.9 5.5-7.2 5.5H-6"
+          fill="none"
+          stroke="#1a1400"
+          strokeWidth="4.5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M-6 -12h7.5c3.8 0 6.5 2 6.5 5c0 2.1-1.1 3.6-3 4.4c2.4.8 3.9 2.6 3.9 5.1c0 3.5-2.9 5.5-7.2 5.5H-6"
+          fill="none"
+          stroke="url(#coinGold)"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+        {/* vertical stem */}
+        <path d="M-6 -12v24" stroke="url(#coinGold)" strokeWidth="3" strokeLinecap="round" />
+        {/* little top/bottom notches (stylized) */}
+        <path d="M2 -12v3 M2 9v3" stroke="url(#coinGold)" strokeWidth="3" strokeLinecap="round" />
+      </g>
+      {/* specular */}
+      <path
+        d="M10 14c6-5 14-8 22-8"
+        stroke="rgba(255,255,255,.35)"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -243,7 +325,6 @@ const tiers = [
       "Permanent DAO council seat",
       "Revenue share from network fees",
     ],
-    icon: Crown,
     accent: "from-yellow-500 to-amber-500",
     badge: "Top Tier",
   },
@@ -257,7 +338,6 @@ const tiers = [
       "Enhanced yields in staking projects",
       "Access to insights and private analytics",
     ],
-    icon: Star,
     accent: "from-amber-500 to-orange-500",
     badge: "Pro",
   },
@@ -266,7 +346,6 @@ const tiers = [
     min: "From 0.01 BTC",
     equity: null as string | null,
     perks: ["x2 $PETB Airdrop", "Bonus conditions for future grant rounds"],
-    icon: Coins,
     accent: "from-amber-300 to-lime-400",
     badge: "Early",
   },
@@ -290,47 +369,31 @@ const Nav = () => (
         <WordmarkBP />
       </a>
       <div className="hidden md:flex items-center gap-6 lg:gap-8 text-sm text-white/75">
-        <a href="#vision" className="hover:text-white transition">
-          Vision
-        </a>
-        <a href="#tiers" className="hover:text-white transition">
-          Tiers
-        </a>
-        <a href="#onchain" className="hover:text-white transition">
-          On-chain
-        </a>
-        <a href="#faq" className="hover:text-white transition">
-          FAQ
-        </a>
-        <a
-          href="#apply"
-          className="hover:text-white transition inline-flex items-center gap-2"
-        >
+        <a href="#vision" className="hover:text-white transition">Vision</a>
+        <a href="#tiers" className="hover:text-white transition">Tiers</a>
+        <a href="#onchain" className="hover:text-white transition">On-chain</a>
+        <a href="#faq" className="hover:text-white transition">FAQ</a>
+        <a href="#apply" className="hover:text-white transition inline-flex items-center gap-2">
           Apply <ArrowRight className="h-4 w-4" />
         </a>
       </div>
-      <a href="#apply" className="md:hidden btn-primary px-3 py-2 text-sm">
-        Join
-      </a>
-      <a href="#apply" className="hidden md:inline-flex btn-primary">
-        Join Whitelist
-      </a>
+      <a href="#apply" className="md:hidden btn-primary px-3 py-2 text-sm">Join</a>
+      <a href="#apply" className="hidden md:inline-flex btn-primary">Join Whitelist</a>
     </div>
   </nav>
 );
 
+/* ===== HERO: усиленная типографика + gold underline + sparks ===== */
 function Hero(): JSX.Element {
   const ref = React.useRef<HTMLElement | null>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end start"],
-  });
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const yTitle = useTransform(scrollYProgress, [0, 1], [0, -80]);
   const yTitleSpring = useSpring(yTitle, { stiffness: 80, damping: 20 });
 
   return (
     <section id="home" ref={ref} className="relative overflow-hidden scroll-mt-24" aria-labelledby="heroTitle">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-16 sm:pt-24 md:pt-28 pb-16 sm:pb-24 text-center">
+
         <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] sm:text-xs text-white/80 mb-5 sm:mb-6">
           <Sparkles className="h-3.5 w-3.5" aria-hidden /> Awwwards-style concept
         </div>
@@ -338,15 +401,14 @@ function Hero(): JSX.Element {
         <motion.h1
           id="heroTitle"
           style={{ y: yTitleSpring }}
-          className="text-[9vw] sm:text-6xl md:text-7xl font-black tracking-tight text-white leading-[1.05] drop-shadow-[0_1px_0_rgba(0,0,0,0.25)]"
+          className="hero-title"
         >
-          The future of Bitcoin
-          <span className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400 drop-shadow-[0_2px_8px_rgba(255,200,0,0.25)]">
-            powered by Peter Todd
-          </span>
+          <span className="hero-line hero-bitcoin">The future of Bitcoin</span>
+          <span className="hero-line hero-by">powered by Peter Todd</span>
+          <span className="hero-underline" aria-hidden />
         </motion.h1>
 
-        <p className="mt-5 sm:mt-6 text-base sm:text-lg md:text-xl text-white/85 mx-auto max-w-2xl sm:max-w-3xl">
+        <p className="hero-lead">
           Investments and strategic support: Peter Todd Bitcoin is launching a next-generation blockchain,
           offering a limited circle of investors a unique opportunity to become co-owners of the project.
           Every contribution is recorded on-chain, ensuring transparency and legal integrity.
@@ -356,22 +418,19 @@ function Hero(): JSX.Element {
           <a href="#apply" className="btn-primary inline-flex items-center gap-2">
             Join <ArrowRight className="h-4 w-4" />
           </a>
-          <a href="#tiers" className="btn-ghost">
-            View Tiers
-          </a>
+          <a href="#tiers" className="btn-ghost">View Tiers</a>
         </div>
 
         <div className="mt-8 sm:mt-10 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-white/70 text-xs sm:text-sm">
-          <span className="inline-flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4" aria-hidden /> On-chain Proof
-          </span>
-          <span className="inline-flex items-center gap-2">
-            <Zap className="h-4 w-4" aria-hidden /> High-throughput L1
-          </span>
-          <span className="inline-flex items-center gap-2">
-            <PieChart className="h-4 w-4" aria-hidden /> DAO Governance
-          </span>
+          <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4" aria-hidden /> On-chain Proof</span>
+          <span className="inline-flex items-center gap-2"><Zap className="h-4 w-4" aria-hidden /> High-throughput L1</span>
+          <span className="inline-flex items-center gap-2"><PieChart className="h-4 w-4" aria-hidden /> DAO Governance</span>
         </div>
+
+        {/* subtle floating sparks */}
+        <i className="hero-spark s1" aria-hidden />
+        <i className="hero-spark s2" aria-hidden />
+        <i className="hero-spark s3" aria-hidden />
       </div>
     </section>
   );
@@ -431,7 +490,8 @@ const Tiers = () => (
         <h2 className="text-3xl md:text-4xl font-extrabold text-white">Participation Tiers</h2>
         <p className="mt-3 text-white/75">Choose your strategy and unlock the project’s on-chain economy.</p>
       </div>
-      <div className="grid lg:grid-cols-3 gap-6">
+
+      <div className="grid lg:grid-cols-3 gap-6 items-stretch">
         {tiers.map((t, i) => (
           <motion.div
             key={t.name}
@@ -441,35 +501,34 @@ const Tiers = () => (
             transition={{ duration: 0.6, delay: i * 0.07, ease: "easeOut" }}
             className="h-full"
           >
-            <FrameCard>
-              <div className="flex h-full flex-col">
-                <div className="flex items-center justify-between">
-                  <div className="inline-flex items-center gap-3">
-                    <div className={`icon-coin bg-gradient-to-br ${t.accent}`}>
-                      <BTCGlyphIcon className="coin-btc" />
-                    </div>
-                    <h3 className="text-lg sm:text-xl font-bold text-white">{t.name}</h3>
+            <FrameCard className="h-full">
+              {/* ВНУТРИ уже flex-col и h-full благодаря FrameCard */}
+              <div className="flex items-center justify-between">
+                <div className="inline-flex items-center gap-3">
+                  <div className={`icon-coin bg-gradient-to-br ${t.accent}`}>
+                    <BTCCoin className="coin-btc" />
                   </div>
-                  <span className="chip">{t.badge}</span>
+                  <h3 className="text-lg sm:text-xl font-bold text-white">{t.name}</h3>
                 </div>
+                <span className="chip">{t.badge}</span>
+              </div>
 
-                <div className="mt-4 text-white/85">
-                  <div className="mini-k uppercase">Minimum</div>
-                  <div className="text-lg font-semibold">{t.min}</div>
-                  {t.equity && <div className="equity">{t.equity}</div>}
-                  <ul className="mt-5 space-y-3">
-                    {t.perks.map((p) => (
-                      <li key={p} className="flex items-start gap-3"><span className="bullet" /> {p}</li>
-                    ))}
-                  </ul>
-                </div>
+              <div className="mt-4 text-white/85">
+                <div className="mini-k uppercase">Minimum</div>
+                <div className="text-lg font-semibold">{t.min}</div>
+                {t.equity && <div className="equity">{t.equity}</div>}
+                <ul className="mt-5 space-y-3">
+                  {t.perks.map((p) => (
+                    <li key={p} className="flex items-start gap-3"><span className="bullet" /> {p}</li>
+                  ))}
+                </ul>
+              </div>
 
-                {/* keep Apply aligned across equal-height cards */}
-                <div className="mt-auto pt-6">
-                  <a href="#apply" className="btn-line inline-flex items-center">
-                    Apply <ArrowRight className="h-4 w-4 ml-2" />
-                  </a>
-                </div>
+              {/* ВЫРАВНИВАНИЕ Apply ВНИЗУ */}
+              <div className="mt-auto pt-6">
+                <a href="#apply" className="btn-line inline-flex items-center">
+                  Apply <ArrowRight className="h-4 w-4 ml-2" />
+                </a>
               </div>
             </FrameCard>
           </motion.div>
@@ -690,7 +749,7 @@ export default function Page(): JSX.Element {
   return (
     <div className="min-h-screen body-bg text-white relative overflow-x-hidden">
       <Background />
-      {/* cursor sheen removed */}
+      <CursorBitcoin />
       <Nav />
       <Hero />
       <section id="vision-anchor">
