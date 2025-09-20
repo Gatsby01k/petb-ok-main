@@ -3,6 +3,37 @@ import React from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, ShieldCheck, Sparkles, Zap, Coins, PieChart, Crown, Star } from "lucide-react";
 
+/** SVG-логотип: монета с BTC-глифом и монограммой PT */
+function LogoPT({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-label="Peter Todd Bitcoin logo" role="img">
+      <defs>
+        <linearGradient id="ptb-g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#FFE08A"/><stop offset="1" stopColor="#FFB800"/>
+        </linearGradient>
+      </defs>
+      <circle cx="32" cy="32" r="30" fill="url(#ptb-g)"/>
+      <circle cx="32" cy="32" r="29" fill="none" stroke="rgba(0,0,0,.2)" strokeWidth="1"/>
+      <circle cx="32" cy="32" r="23" fill="none" stroke="rgba(0,0,0,.12)" strokeWidth="1" />
+      {/* BTC glyph stylized */}
+      <path fill="rgba(0,0,0,.7)" d="M36.6 18.8l.6-2.6 2.5.6-.6 2.5c2.7 1.1 4.5 3.5 3.7 6.4-.6 2.3-2.3 3.5-4.4 4 2.8 1.1 4.5 3.2 3.7 6.2-1 3.9-4.2 5.2-8.3 5.2l-.7 3-2.5-.6.6-2.7a41 41 0 0 1-2.6-.5l-.7 3-2.5-.6.7-2.9c-.7-.2-1.3-.3-2-.5l-3.8-1 1-3.8 2.2.6 1.3-5-2.3-.6 1-3.8 2.2.6.8-3.2-2.2-.6 1-3.8 3.8 1c.7.2 1.4.3 2 .5l.7-3 2.5.6-.6 2.7c.8.1 1.6.3 2.3.6Zm-7.8 6.6-1.4 5.5c3.1.8 9.1 2.6 10.1-1 .9-3.5-4.8-4.1-8.7-4.5Zm-2.4 9.4-1.6 6.2c3.7.9 10.6 3 11.8-1.5 1.1-4.3-6.1-4.7-10.2-4.7Z"/>
+      {/* PT monogram */}
+      <path fill="rgba(0,0,0,.55)" d="M14 41V18h11.5c5.2 0 8.5 2.8 8.5 7.1s-3.3 7.3-8.5 7.3H20v8.6H14Zm6-13.2h5.3c2 0 3.2-1.1 3.2-2.8s-1.2-2.7-3.2-2.7H20v5.5Z"/>
+    </svg>
+  );
+}
+
+/** Фон: сетка + мягкие кольца + шум */
+function Background() {
+  return (
+    <>
+      <div className="bg-grid" />
+      <div className="bg-rings" />
+      <div className="bg-noise" />
+    </>
+  );
+}
+
 function GlassCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={`relative rounded-3xl p-6 sm:p-8 backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl ${className}`}>
@@ -11,10 +42,6 @@ function GlassCard({ children, className = "" }: { children: React.ReactNode; cl
     </div>
   );
 }
-
-// Лёгкие декоративные элементы без инлайновых SVG (чтобы не было экранирования и ошибок сборки)
-const Noise = () => null;
-const BTCWatermarks = () => null;
 
 const tiers = [
   {
@@ -30,12 +57,7 @@ const tiers = [
     name: "Premium Supporter",
     min: "From 0.1 BTC",
     equity: null,
-    perks: [
-      "x5 $PETB Airdrop",
-      "Priority access to all releases",
-      "Enhanced yields in staking projects",
-      "Access to insights and private analytics",
-    ],
+    perks: ["x5 $PETB Airdrop","Priority access to all releases","Enhanced yields in staking projects","Access to insights and private analytics"],
     icon: Star,
     accent: "from-amber-500 to-orange-500",
     badge: "Pro",
@@ -44,7 +66,7 @@ const tiers = [
     name: "Early Partner",
     min: "From 0.01 BTC",
     equity: null,
-    perks: ["x2 $PETB Airdrop", "Bonus conditions for future grant rounds"],
+    perks: ["x2 $PETB Airdrop","Bonus conditions for future grant rounds"],
     icon: Coins,
     accent: "from-amber-300 to-lime-400",
     badge: "Early",
@@ -52,14 +74,13 @@ const tiers = [
 ] as const;
 
 const Nav = () => (
-  <nav className="sticky top-0 z-40 w-full backdrop-blur supports-[backdrop-filter]:bg-white/5 border-b border-white/10">
+  <nav className="sticky top-0 z-40 w-full glass">
     <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
       <a href="#home" className="group inline-flex items-center gap-3">
-        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-amber-300 to-yellow-500 grid place-items-center font-black text-black/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">PT</div>
-        <span className="text-white/90 font-semibold tracking-wide group-hover:text-white transition">
-          <span className="sr-only">Brand:</span>
-          <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400 drop-shadow-[0_1px_0_rgba(0,0,0,0.25)]">Peter Todd</span>
-          <span className="ml-1">Bitcoin</span>
+        <LogoPT className="h-9 w-9 rounded-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]" />
+        <span className="font-semibold tracking-wide">
+          <span className="brand-gradient drop-shadow-[0_1px_0_rgba(0,0,0,0.25)]">Peter&nbsp;Todd</span>
+          <span className="ml-1 text-white/90 group-hover:text-white transition">Bitcoin</span>
         </span>
       </a>
       <div className="hidden md:flex items-center gap-8 text-sm text-white/70">
@@ -67,9 +88,13 @@ const Nav = () => (
         <a href="#tiers" className="hover:text-white transition">Tiers</a>
         <a href="#onchain" className="hover:text-white transition">On-chain</a>
         <a href="#faq" className="hover:text-white transition">FAQ</a>
-        <a href="#apply" className="hover:text-white transition"><span className="inline-flex items-center gap-2">Apply <ArrowRight className="h-4 w-4" /></span></a>
+        <a href="#apply" className="hover:text-white transition inline-flex items-center gap-2">
+          Apply <ArrowRight className="h-4 w-4" />
+        </a>
       </div>
-      <a href="#apply" className="md:inline-flex hidden rounded-2xl bg-gradient-to-br from-amber-200 to-yellow-400 text-black/80 px-4 py-2 font-semibold shadow hover:shadow-lg transition">Join Whitelist</a>
+      <a href="#apply" className="md:inline-flex hidden rounded-2xl bg-gradient-to-br from-amber-200 to-yellow-400 text-black/80 px-4 py-2 font-semibold shadow hover:shadow-lg transition">
+        Join Whitelist
+      </a>
     </div>
   </nav>
 );
@@ -218,7 +243,6 @@ const OnChain = () => (
 );
 
 const Apply = () => {
-
   const [submitting, setSubmitting] = React.useState(false);
   const onSubmitApply: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
@@ -240,8 +264,12 @@ const Apply = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const j = await res.json();
-      if (!res.ok || !j.ok) throw new Error(j.error || "Submit failed");
+      let j: any = {};
+      try { j = await res.json(); } catch {}
+      if (!res.ok || j?.ok === false) {
+        const details = j?.missing ? ` (${j.missing.join(", ")})` : "";
+        throw new Error((j?.error || res.statusText || "Submit failed") + details);
+      }
       alert("Application sent. We'll contact you soon.");
       form.reset();
     } catch (err:any) {
@@ -263,26 +291,25 @@ const Apply = () => {
               </p>
             </div>
 
-            {/* НАТИВНАЯ ОТПРАВКА — без JS */}
             <form className="grid sm:grid-cols-2 gap-4" action="/api/apply" method="POST" noValidate onSubmit={onSubmitApply}>
               {/* honeypot (антибот) */}
               <input type="text" name="website" className="hidden" tabIndex={-1} autoComplete="off" />
 
               <div className="sm:col-span-1">
-                <label className="text-sm text-white/75">Full name</label>
-                <input name="fullName" required placeholder="Satoshi Nakamoto"
+                <label htmlFor="fullName" className="text-sm text-white/75">Full name</label>
+                <input id="fullName" name="fullName" required placeholder="Satoshi Nakamoto"
                   className="mt-1 w-full rounded-xl bg-white/5 border border-white/15 px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-yellow-400" />
               </div>
 
               <div className="sm:col-span-1">
-                <label className="text-sm text-white/75">Email</label>
-                <input name="email" type="email" required placeholder="you@domain.com"
+                <label htmlFor="email" className="text-sm text-white/75">Email</label>
+                <input id="email" name="email" type="email" required placeholder="you@domain.com"
                   className="mt-1 w-full rounded-xl bg-white/5 border border-white/15 px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-yellow-400" />
               </div>
 
               <div className="sm:col-span-1">
-                <label className="text-sm text-white/75">Participation tier</label>
-                <select name="tier"
+                <label htmlFor="tier" className="text-sm text-white/75">Participation tier</label>
+                <select id="tier" name="tier"
                   className="mt-1 w-full rounded-xl bg-white/5 border border-white/15 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400">
                   <option>Strategic Investor (≥ 1 BTC)</option>
                   <option>Premium Supporter (≥ 0.1 BTC)</option>
@@ -291,14 +318,14 @@ const Apply = () => {
               </div>
 
               <div className="sm:col-span-1">
-                <label className="text-sm text-white/75">Intended contribution (BTC)</label>
-                <input name="amount" type="number" step="0.00000001" placeholder="1.00"
+                <label htmlFor="amount" className="text-sm text-white/75">Intended contribution (BTC)</label>
+                <input id="amount" name="amount" type="number" step="0.00000001" placeholder="1.00"
                   className="mt-1 w-full rounded-xl bg-white/5 border border-white/15 px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-yellow-400" />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="text-sm text-white/75">Message</label>
-                <textarea name="message" rows={4}
+                <label htmlFor="message" className="text-sm text-white/75">Message</label>
+                <textarea id="message" name="message" rows={4}
                   placeholder="Briefly describe your background and expectations"
                   className="mt-1 w-full rounded-xl bg-white/5 border border-white/15 px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-yellow-400" />
               </div>
@@ -310,10 +337,10 @@ const Apply = () => {
                 </label>
 
                 <button
-                  type="submit" disabled={submitting}
+                  type="submit" disabled={submitting} aria-busy={submitting}
                   className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-br from-amber-200 to-yellow-400 text-black/80 px-5 py-3 font-semibold shadow hover:shadow-lg transition"
                 >
-                  Submit application
+                  {submitting ? "Sending…" : "Submit application"}
                 </button>
               </div>
             </form>
@@ -327,7 +354,6 @@ const Apply = () => {
     </section>
   );
 };
-
 
 const FAQ = () => (
   <section id="faq" className="relative py-16 sm:py-24">
@@ -353,10 +379,10 @@ const Footer = () => (
   <footer className="relative py-10 border-t border-white/10">
     <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-white/70 text-sm">
       <div className="flex items-center gap-3">
-        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-amber-300 to-yellow-500 grid place-items-center font-black text-black/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">PT</div>
-        <span>
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400 font-semibold">Peter Todd</span>
-          <span className="ml-1">Bitcoin</span>
+        <LogoPT className="h-8 w-8" />
+        <span className="leading-none">
+          <span className="brand-gradient font-semibold">Peter&nbsp;Todd</span>
+          <span className="ml-1 text-white/85">Bitcoin</span>
           <span> © {new Date().getFullYear()}</span>
         </span>
       </div>
@@ -371,9 +397,8 @@ const Footer = () => (
 
 export default function Page() {
   return (
-    <div className="min-h-screen bg-[#11100c] text-white">
-      <BTCWatermarks />
-      <Noise />
+    <div className="min-h-screen body-bg text-white relative">
+      <Background />
       <Nav />
       <Hero />
       <Vision />
