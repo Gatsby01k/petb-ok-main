@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { motion, useScroll, useTransform, useSpring, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
   ShieldCheck,
@@ -59,13 +59,15 @@ function Background() {
   );
 }
 
-/** Диагональная подсветка (sheen) — типизировано для TS */
+/** Диагональная подсветка (sheen) — с учётом reduced motion */
 function MouseSheen(): JSX.Element {
   const ref = React.useRef<HTMLDivElement | null>(null);
+  const prefersReducedMotion = useReducedMotion();
 
   React.useEffect(() => {
+    if (prefersReducedMotion) return; // уважение prefers-reduced-motion
     let raf = 0;
-    const onMove = (e: MouseEvent) => {
+    const onMove = (e: PointerEvent) => {
       const x = e.clientX + "px";
       const y = e.clientY + "px";
       cancelAnimationFrame(raf);
@@ -76,12 +78,12 @@ function MouseSheen(): JSX.Element {
         }
       });
     };
-    window.addEventListener("mousemove", onMove as EventListener, { passive: true });
+    window.addEventListener("pointermove", onMove, { passive: true });
     return () => {
-      window.removeEventListener("mousemove", onMove as EventListener);
+      window.removeEventListener("pointermove", onMove);
       cancelAnimationFrame(raf);
     };
-  }, []);
+  }, [prefersReducedMotion]);
 
   return <div ref={ref} className="mouse-sheen" aria-hidden />;
 }
@@ -106,7 +108,7 @@ function FrameCard({
   );
 }
 
-/* ===== кастомный тёмный select для Tiers ===== */
+/* ===== кастомный доступный select для Tiers (listbox pattern) ===== */
 
 type TierOption = { label: string; value: string; note?: string };
 
@@ -124,12 +126,21 @@ function TierSelect({
   defaultValue?: string;
 }) {
   const [open, setOpen] = React.useState<boolean>(false);
+  const [activeIndex, setActiveIndex] = React.useState<number>(0);
   const [selected, setSelected] = React.useState<TierOption>(
     TIER_OPTIONS.find((t) => t.value === defaultValue) || TIER_OPTIONS[0]
   );
   const btnRef = React.useRef<HTMLButtonElement | null>(null);
   const listRef = React.useRef<HTMLDivElement | null>(null);
+  const listboxId = React.useId();
 
+  // sync activeIndex to selected
+  React.useEffect(() => {
+    const idx = TIER_OPTIONS.findIndex((o) => o.value === selected.value);
+    if (idx >= 0) setActiveIndex(idx);
+  }, [selected.value]);
+
+  // outside click
   React.useEffect(() => {
     const onDoc = (e: MouseEvent) => {
       if (!open) return;
@@ -142,15 +153,48 @@ function TierSelect({
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
-  const onKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+  const commitSelection = (idx: number) => {
+    const opt = TIER_OPTIONS[idx];
+    if (!opt) return;
+    setSelected(opt);
+    setOpen(false);
+    // вернуть фокус на кнопку для доступности
+    btnRef.current?.focus();
+  };
+
+  const onButtonKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (!open && (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ")) {
       e.preventDefault();
       setOpen(true);
       return;
     }
     if (open && e.key === "Escape") {
+      e.preventDefault();
       setOpen(false);
       return;
+    }
+  };
+
+  const onListKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!open) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => (i + 1) % TIER_OPTIONS.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => (i - 1 + TIER_OPTIONS.length) % TIER_OPTIONS.length);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      setActiveIndex(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      setActiveIndex(TIER_OPTIONS.length - 1);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      commitSelection(activeIndex);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setOpen(false);
     }
   };
 
@@ -162,35 +206,44 @@ function TierSelect({
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
+        aria-controls={listboxId}
         onClick={() => setOpen((v) => !v)}
-        onKeyDown={onKeyDown}
+        onKeyDown={onButtonKeyDown}
         className="select-btn"
       >
         <span className="flex flex-col text-left">
           <span className="text-white">{selected.value}</span>
           {selected.note && <span className="text-xs text-white/60">{selected.note}</span>}
         </span>
-        <ChevronDown className="h-4 w-4 opacity-80" />
+        <ChevronDown className="h-4 w-4 opacity-80" aria-hidden />
       </button>
 
       {open && (
-        <div ref={listRef} role="listbox" tabIndex={-1} className="select-menu">
-          {TIER_OPTIONS.map((opt) => {
-            const isActive = opt.value === selected.value;
+        <div
+          id={listboxId}
+          ref={listRef}
+          role="listbox"
+          tabIndex={-1}
+          className="select-menu"
+          aria-activedescendant={`${listboxId}-opt-${activeIndex}`}
+          onKeyDown={onListKeyDown}
+        >
+          {TIER_OPTIONS.map((opt, idx) => {
+            const isActive = idx === activeIndex;
+            const isSelected = opt.value === selected.value;
             return (
               <button
+                id={`${listboxId}-opt-${idx}`}
                 key={opt.value}
                 role="option"
-                aria-selected={isActive}
-                onClick={() => {
-                  setSelected(opt);
-                  setOpen(false);
-                }}
-                className={`select-item ${isActive ? "is-active" : ""}`}
+                aria-selected={isSelected}
+                onMouseEnter={() => setActiveIndex(idx)}
+                onClick={() => commitSelection(idx)}
+                className={`select-item ${isSelected ? "is-active" : ""} ${isActive ? "is-focused" : ""}`}
               >
                 <div className="flex items-start gap-3">
-                  <div className={`check ${isActive ? "on" : ""}`}>
-                    <Check className="h-3.5 w-3.5" />
+                  <div className={`check ${isSelected ? "on" : ""}`}>
+                    <Check className="h-3.5 w-3.5" aria-hidden />
                   </div>
                   <div className="flex flex-col text-left">
                     <span className="label">{opt.label}</span>
@@ -250,7 +303,8 @@ const tiers = [
 ========================= */
 
 const Nav = () => (
-  <nav className="sticky top-0 z-40 w-full glass">
+  <nav className="sticky top-0 z-40 w-full glass" aria-label="Primary">
+    <a href="#content" className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-[100] btn-ghost px-3 py-2">Skip to content</a>
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
       <a href="#home" className="group inline-flex items-center gap-2 sm:gap-3">
         <BTCBadge className="h-9 w-9" />
@@ -271,22 +325,24 @@ const Nav = () => (
   </nav>
 );
 
-/** Hero: тексты — как в твоём оригинале */
+/** Hero: тексты — как в оригинале, c respect reduced motion */
 function Hero(): JSX.Element {
   const ref = React.useRef<HTMLElement | null>(null);
+  const prefersReducedMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const yTitle = useTransform(scrollYProgress, [0, 1], [0, -80]);
   const yTitleSpring = useSpring(yTitle, { stiffness: 80, damping: 20 });
 
   return (
-    <section id="home" ref={ref} className="relative overflow-hidden scroll-mt-24">
+    <section id="home" ref={ref} className="relative overflow-hidden scroll-mt-24" aria-labelledby="heroTitle">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-16 sm:pt-24 md:pt-28 pb-16 sm:pb-24 text-center">
         <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] sm:text-xs text-white/80 mb-5 sm:mb-6">
-          <Sparkles className="h-3.5 w-3.5" /> Awwwards-style concept
+          <Sparkles className="h-3.5 w-3.5" aria-hidden /> Awwwards-style concept
         </div>
 
         <motion.h1
-          style={{ y: yTitleSpring }}
+          id="heroTitle"
+          style={prefersReducedMotion ? undefined : { y: yTitleSpring }}
           className="text-[9vw] sm:text-6xl md:text-7xl font-black tracking-tight text-white leading-[1.05] drop-shadow-[0_1px_0_rgba(0,0,0,0.25)]"
         >
           The future of Bitcoin
@@ -309,9 +365,9 @@ function Hero(): JSX.Element {
         </div>
 
         <div className="mt-8 sm:mt-10 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-white/70 text-xs sm:text-sm">
-          <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> On-chain Proof</span>
-          <span className="inline-flex items-center gap-2"><Zap className="h-4 w-4" /> High-throughput L1</span>
-          <span className="inline-flex items-center gap-2"><PieChart className="h-4 w-4" /> DAO Governance</span>
+          <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4" aria-hidden /> On-chain Proof</span>
+          <span className="inline-flex items-center gap-2"><Zap className="h-4 w-4" aria-hidden /> High-throughput L1</span>
+          <span className="inline-flex items-center gap-2"><PieChart className="h-4 w-4" aria-hidden /> DAO Governance</span>
         </div>
       </div>
     </section>
@@ -385,7 +441,7 @@ const Tiers = () => (
               <div className="flex items-center justify-between">
                 <div className="inline-flex items-center gap-2">
                   <div className={`h-10 w-10 rounded-2xl bg-gradient-to-br ${t.accent} grid place-items-center`}>
-                    <t.icon className="h-5 w-5 text-black/70" />
+                    <t.icon className="h-5 w-5 text-black/70" aria-hidden />
                   </div>
                   <h3 className="text-lg sm:text-xl font-bold text-white">{t.name}</h3>
                 </div>
@@ -446,6 +502,8 @@ const OnChain = () => (
 
 const Apply = () => {
   const [submitting, setSubmitting] = React.useState<boolean>(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [ok, setOk] = React.useState<boolean>(false);
 
   const onSubmitApply: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
@@ -462,6 +520,8 @@ const Apply = () => {
     };
     try {
       setSubmitting(true);
+      setError(null);
+      setOk(false);
       const res = await fetch("/api/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -475,11 +535,11 @@ const Apply = () => {
         const details = j?.missing ? ` (${j.missing.join(", ")})` : "";
         throw new Error((j?.error || res.statusText || "Submit failed") + details);
       }
-      alert("Application sent. We'll contact you soon.");
+      setOk(true);
       form.reset();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      alert("Error: " + message);
+      setError(message);
     } finally {
       setSubmitting(false);
     }
@@ -498,6 +558,7 @@ const Apply = () => {
             </div>
 
             <form
+              id="content"
               className="grid sm:grid-cols-2 gap-4"
               action="/api/apply"
               method="POST"
@@ -514,7 +575,7 @@ const Apply = () => {
 
               <div className="sm:col-span-1">
                 <label htmlFor="email" className="label">Email</label>
-                <input id="email" name="email" type="email" required placeholder="you@domain.com" className="input" />
+                <input id="email" name="email" type="email" required inputMode="email" placeholder="you@domain.com" className="input" />
               </div>
 
               <div className="sm:col-span-1">
@@ -524,7 +585,7 @@ const Apply = () => {
 
               <div className="sm:col-span-1">
                 <label htmlFor="amount" className="label">Intended contribution (BTC)</label>
-                <input id="amount" name="amount" type="number" step="0.00000001" placeholder="1.00" className="input" />
+                <input id="amount" name="amount" type="number" min="0" step="0.00000001" placeholder="1.00" className="input" />
               </div>
 
               <div className="sm:col-span-2">
@@ -532,7 +593,7 @@ const Apply = () => {
                 <textarea id="message" name="message" rows={4} placeholder="Briefly describe your background and expectations" className="input" />
               </div>
 
-              <div className="sm:col-span-2 flex items-center justify-between">
+              <div className="sm:col-span-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <label className="inline-flex items-center gap-2 text-white/80 text-sm">
                   <input name="consent" type="checkbox" required className="accent-yellow-400" />
                   I agree to personal data processing
@@ -542,6 +603,17 @@ const Apply = () => {
                   {submitting ? "Sending…" : "Submit application"}
                 </button>
               </div>
+
+              {error && (
+                <div role="alert" className="sm:col-span-2 text-sm text-red-200 bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+                  <strong className="font-semibold">Error:</strong> {error}
+                </div>
+              )}
+              {ok && (
+                <div role="status" className="sm:col-span-2 text-sm text-emerald-200 bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3">
+                  Application sent. We'll contact you soon.
+                </div>
+              )}
             </form>
 
             <div className="text-xs text-white/70">
@@ -594,7 +666,7 @@ const Footer = () => (
         <BTCBadge className="h-9 w-9" />
         <WordmarkBP />
       </a>
-    <div className="flex items-center gap-6">
+      <div className="flex items-center gap-6">
         <a href="#" className="hover:text-white transition">Terms</a>
         <a href="#" className="hover:text-white transition">Privacy</a>
         <a href="#" className="hover:text-white transition">Imprint</a>
