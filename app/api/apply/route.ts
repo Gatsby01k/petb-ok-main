@@ -1,11 +1,9 @@
 // app/api/apply/route.ts
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
-import { z } from "zod";
 
 type AnyDict = Record<string, any>;
 
-/* ---------- utils: чтение тела из json/формы ---------- */
 function toObjectFromForm(fd: FormData): AnyDict {
   const obj: AnyDict = {};
   for (const [k, v] of fd.entries()) obj[k] = typeof v === "string" ? v : (v as File).name;
@@ -25,23 +23,13 @@ async function parseBody(req: Request): Promise<AnyDict> {
   return {};
 }
 
-/* ---------- защита ---------- */
-const recent = new Map<string, number>(); // простой rate-limit по IP
+// --- простая защита ---
+const recent = new Map<string, number>();
 const RATE_MS = 15_000;
 
-const Schema = z.object({
-  fullName: z.string().trim().min(2, "Name too short"),
-  email: z.string().trim().email("Invalid email"),
-  tier: z.enum(["Strategic Investor", "Premium Supporter", "Early Partner"]),
-  amount: z.string().trim().optional(),
-  message: z.string().trim().optional(),
-  consent: z.boolean().optional(),
-  hp: z.string().optional(), // honeypot
-});
-
-/* ---------- html helpers ---------- */
 const esc = (s: string) =>
   String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
 const row = (k: string, v: string) =>
   `<li><b>${esc(k)}:</b> ${v ? esc(v) : "—"}</li>`;
 
@@ -70,36 +58,28 @@ export async function POST(req: Request) {
 
   const raw = await parseBody(req);
 
-  // мягкая совместимость с разными ключами, но требуем core-поля
+  // совместимость с разными именами полей
   const body = {
     fullName: String(raw.fullName ?? raw.name ?? "").trim(),
-    email: String(raw.email ?? raw.mail ?? "").trim(),
-    tier: String(raw.tier ?? raw.participation ?? ""),
+    email: String(raw.email ?? raw.mail ?? "").trim().toLowerCase(),
+    tier: String(raw.tier ?? raw.participation ?? "").trim(),
     amount: String(raw.amount ?? raw.btc ?? raw.contribution ?? "").trim(),
     message: String(raw.message ?? raw.msg ?? raw.comment ?? "").trim(),
     consent: Boolean(raw.consent),
-    hp: String(raw.hp ?? raw.website ?? "").trim(), // honeypot в твоей форме = "website"
+    hp: String(raw.hp ?? raw.website ?? "").trim(), // honeypot
   };
 
-  // honeypot: если заполнен — делаем вид, что всё ок (бот уходит довольный)
-  if (body.hp) {
-    return NextResponse.json({ ok: true });
-  }
+  // honeypot
+  if (body.hp) return NextResponse.json({ ok: true });
 
-  // валидация
-  const parsed = Schema.safeParse(body);
-  if (!parsed.success) {
-    const missing = parsed.error.issues.map(i => i.path.join("."));
+  // ручная валидация (минимально жёсткая)
+  const missing: string[] = [];
+  if (body.fullName.length < 2) missing.push("fullName");
+  if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(body.email)) missing.push("email");
+  if (!["Strategic Investor","Premium Supporter","Early Partner"].includes(body.tier)) missing.push("tier");
+  if (missing.length) {
     return NextResponse.json({ ok:false, error:"Invalid data", missing }, { status:400 });
   }
-
-  // минимальные прод-проверки
-  const domain = body.email.split("@")[1]?.toLowerCase() || "";
-  if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(body.email)) {
-    return NextResponse.json({ ok:false, error:"Invalid email" }, { status:400 });
-  }
-  // (опционально) не принимать анонимные домены — отключи при желании:
-  // if (/(tempmail|10minutemail|guerrilla)/i.test(domain)) { ... }
 
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
   const TO   = process.env.TO_EMAIL   || "info@bitcoinpetertodd.com";
@@ -109,8 +89,7 @@ export async function POST(req: Request) {
   }
 
   const resend = new Resend(RESEND_API_KEY);
-
-  const subject = `New Whitelist Application — ${body.fullName || "Applicant"}${body.amount ? ` (${body.amount} BTC)` : ""}`;
+  const subject = `New Whitelist Application — ${body.fullName}${body.amount ? ` (${body.amount} BTC)` : ""}`;
 
   const html = cardHtml(`
     <h2 style="margin:0 0 8px;font-size:20px;color:#fff">New Whitelist Application</h2>
@@ -130,9 +109,8 @@ export async function POST(req: Request) {
     <div style="margin-top:16px;font-size:12px;color:#b3a57a">
       On-chain whitelist • Peter Todd Bitcoin
     </div>
-  `); // ← НИКАКИХ “This message was generated …”
+  `);
 
-  // письмо себе
   await resend.emails.send({
     from: FROM,
     to: TO,
@@ -141,7 +119,6 @@ export async function POST(req: Request) {
     reply_to: body.email || undefined,
   });
 
-  // авто-ответ заявителю (мягко, без ошибок если не доставится)
   if (body.email) {
     const confirmHtml = cardHtml(`
       <h3 style="margin:0 0 10px;font-size:18px;color:#fff">We received your application</h3>
