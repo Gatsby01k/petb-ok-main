@@ -1,14 +1,16 @@
+// app/api/apply/route.ts
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { z } from "zod";
 
 type AnyDict = Record<string, any>;
 
+/* ---------- utils: чтение тела из json/формы ---------- */
 function toObjectFromForm(fd: FormData): AnyDict {
   const obj: AnyDict = {};
   for (const [k, v] of fd.entries()) obj[k] = typeof v === "string" ? v : (v as File).name;
   return obj;
 }
-
 async function parseBody(req: Request): Promise<AnyDict> {
   const ct = (req.headers.get("content-type") || "").toLowerCase();
   try {
@@ -23,105 +25,136 @@ async function parseBody(req: Request): Promise<AnyDict> {
   return {};
 }
 
+/* ---------- защита ---------- */
+const recent = new Map<string, number>(); // простой rate-limit по IP
+const RATE_MS = 15_000;
+
+const Schema = z.object({
+  fullName: z.string().trim().min(2, "Name too short"),
+  email: z.string().trim().email("Invalid email"),
+  tier: z.enum(["Strategic Investor", "Premium Supporter", "Early Partner"]),
+  amount: z.string().trim().optional(),
+  message: z.string().trim().optional(),
+  consent: z.boolean().optional(),
+  hp: z.string().optional(), // honeypot
+});
+
+/* ---------- html helpers ---------- */
 const esc = (s: string) =>
   String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const row = (k: string, v: string) =>
+  `<li><b>${esc(k)}:</b> ${v ? esc(v) : "—"}</li>`;
 
-function pickFirst(obj: AnyDict, keys: string[]): {value: string, used: string[]} {
-  const used: string[] = [];
-  for (const k of keys) {
-    const v = obj?.[k];
-    if (v !== undefined && v !== null && String(v).trim() !== "") {
-      used.push(k);
-      return { value: String(v).trim(), used };
-    }
-  }
-  return { value: "", used };
-}
-
-function tableFromEntries(entries: [string, any][]) {
-  const rows = entries.map(([k, v]) =>
-    `<tr><td style="padding:6px 10px;border:1px solid #eee"><b>${esc(k)}</b></td><td style="padding:6px 10px;border:1px solid #eee">${esc(String(v))}</td></tr>`
-  ).join("");
-  return `<table style="border-collapse:collapse;border:1px solid #eee">${rows}</table>`;
+function cardHtml(inner: string) {
+  return `
+  <div style="font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;color:#eee;background:#0f0e0b;padding:24px">
+    <div style="max-width:680px;margin:0 auto;border-radius:18px;padding:1px;background:
+      conic-gradient(from 180deg at 50% 50%, rgba(255,200,0,.35), rgba(100,100,100,.2), rgba(255,200,0,.25), rgba(80,80,80,.2), rgba(255,200,0,.35))">
+      <div style="background:rgba(20,19,14,.9);border-radius:17px;padding:20px 22px">
+        ${inner}
+      </div>
+    </div>
+  </div>`.trim();
 }
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
-  try {
-    const data = await parseBody(req);
-
-    // Нормализация ключевых полей
-    const fullNamePick = pickFirst(data, ["fullName","name","fullname","full_name","full-name","full name"]);
-    const emailPick    = pickFirst(data, ["email","mail","e-mail","e_mail"]);
-    const tierPick     = pickFirst(data, ["tier","participation","level"]);
-    const amountPick   = pickFirst(data, ["amount","btc","contribution","intended","value"]);
-    const messagePick  = pickFirst(data, ["message","msg","comment","note"]);
-
-    const fullName = fullNamePick.value;
-    const email    = emailPick.value;
-    const tier     = tierPick.value;
-    const amount   = amountPick.value;
-    const message  = messagePick.value;
-
-    // Список использованных ключей, чтобы не дублировать в таблице
-    const usedKeys = new Set<string>([
-      ...fullNamePick.used, ...emailPick.used, ...tierPick.used, ...amountPick.used, ...messagePick.used,
-      "hp", "consent"
-    ]);
-
-    // Собираем только дополнительные поля (если они вообще есть)
-    const extras = Object.entries(data).filter(([k]) => !usedKeys.has(k));
-
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) return NextResponse.json({ ok:false, error:"Server email is not configured" }, { status:500 });
-
-    const resend = new Resend(apiKey);
-    const to   = process.env.TO_EMAIL   || "info@bitcoinpetertodd.com";
-    const from = process.env.FROM_EMAIL || "no-reply@bitcoinpetertodd.com";
-
-    // HTML письма без дубляжа
-    let html = `
-      <h2>New Whitelist Application</h2>
-      <ul>
-        <li><b>Full name:</b> ${esc(fullName || "—")}</li>
-        <li><b>Email:</b> ${esc(email || "—")}</li>
-        <li><b>Participation tier:</b> ${esc(tier || "—")}</li>
-        <li><b>Intended contribution (BTC):</b> ${esc(amount || "—")}</li>
-      </ul>
-    `;
-    if (message) {
-      html += `
-        <p><b>Message:</b></p>
-        <pre style="white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace">${esc(message)}</pre>
-      `;
-    }
-    if (extras.length) {
-      html += `<h3 style="margin-top:16px">Additional fields</h3>${tableFromEntries(extras)}`;
-    }
-    html += '<p style="color:#888;font-size:12px">This message was generated by the website form.</p>';
-
-    await resend.emails.send({
-      from,
-      to,
-      subject: `New Whitelist Application — ${fullName || "Unknown"}${amount ? ` (${amount} BTC)` : ""}`,
-      html,
-      reply_to: email || undefined
-    });
-
-    // Нежёстко: подтверждение пользователю (если указал email)
-    if (email) {
-      await resend.emails.send({
-        from,
-        to: email,
-        subject: "We received your whitelist application",
-        html: "<p>Thanks! We have received your application and will reach out for KYC/AML and on-chain instructions.</p>"
-      }).catch(() => {});
-    }
-
-    return NextResponse.json({ ok:true });
-  } catch (e:any) {
-    console.error("apply route error:", e);
-    return NextResponse.json({ ok:false, error: e?.message || "Unknown error" }, { status:500 });
+  // rate-limit
+  const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "unknown";
+  const now = Date.now();
+  const last = recent.get(ip) || 0;
+  if (now - last < RATE_MS) {
+    return NextResponse.json({ ok:false, error:"Too many requests" }, { status:429 });
   }
+
+  const raw = await parseBody(req);
+
+  // мягкая совместимость с разными ключами, но требуем core-поля
+  const body = {
+    fullName: String(raw.fullName ?? raw.name ?? "").trim(),
+    email: String(raw.email ?? raw.mail ?? "").trim(),
+    tier: String(raw.tier ?? raw.participation ?? ""),
+    amount: String(raw.amount ?? raw.btc ?? raw.contribution ?? "").trim(),
+    message: String(raw.message ?? raw.msg ?? raw.comment ?? "").trim(),
+    consent: Boolean(raw.consent),
+    hp: String(raw.hp ?? raw.website ?? "").trim(), // honeypot в твоей форме = "website"
+  };
+
+  // honeypot: если заполнен — делаем вид, что всё ок (бот уходит довольный)
+  if (body.hp) {
+    return NextResponse.json({ ok: true });
+  }
+
+  // валидация
+  const parsed = Schema.safeParse(body);
+  if (!parsed.success) {
+    const missing = parsed.error.issues.map(i => i.path.join("."));
+    return NextResponse.json({ ok:false, error:"Invalid data", missing }, { status:400 });
+  }
+
+  // минимальные прод-проверки
+  const domain = body.email.split("@")[1]?.toLowerCase() || "";
+  if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(body.email)) {
+    return NextResponse.json({ ok:false, error:"Invalid email" }, { status:400 });
+  }
+  // (опционально) не принимать анонимные домены — отключи при желании:
+  // if (/(tempmail|10minutemail|guerrilla)/i.test(domain)) { ... }
+
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  const TO   = process.env.TO_EMAIL   || "info@bitcoinpetertodd.com";
+  const FROM = process.env.FROM_EMAIL || "no-reply@bitcoinpetertodd.com";
+  if (!RESEND_API_KEY) {
+    return NextResponse.json({ ok:false, error:"Server email is not configured" }, { status:500 });
+  }
+
+  const resend = new Resend(RESEND_API_KEY);
+
+  const subject = `New Whitelist Application — ${body.fullName || "Applicant"}${body.amount ? ` (${body.amount} BTC)` : ""}`;
+
+  const html = cardHtml(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:#fff">New Whitelist Application</h2>
+    <ul style="margin:12px 0 0;padding:0 0 0 18px;line-height:1.55">
+      ${row("Full name", body.fullName)}
+      ${row("Email", body.email)}
+      ${row("Participation tier", body.tier)}
+      ${row("Intended contribution (BTC)", body.amount)}
+    </ul>
+    ${body.message ? `
+    <div style="margin-top:14px">
+      <div style="opacity:.8;font-size:12px;margin-bottom:6px">Message</div>
+      <div style="white-space:pre-wrap;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:12px;color:#eee">
+        ${esc(body.message)}
+      </div>
+    </div>` : ""}
+    <div style="margin-top:16px;font-size:12px;color:#b3a57a">
+      On-chain whitelist • Peter Todd Bitcoin
+    </div>
+  `); // ← НИКАКИХ “This message was generated …”
+
+  // письмо себе
+  await resend.emails.send({
+    from: FROM,
+    to: TO,
+    subject,
+    html,
+    reply_to: body.email || undefined,
+  });
+
+  // авто-ответ заявителю (мягко, без ошибок если не доставится)
+  if (body.email) {
+    const confirmHtml = cardHtml(`
+      <h3 style="margin:0 0 10px;font-size:18px;color:#fff">We received your application</h3>
+      <p style="margin:0;color:#ddd">Thanks! We will contact you for KYC/AML and on-chain instructions.</p>
+    `);
+    await resend.emails.send({
+      from: FROM,
+      to: body.email,
+      subject: "We received your whitelist application",
+      html: confirmHtml,
+    }).catch(() => {});
+  }
+
+  recent.set(ip, now);
+  return NextResponse.json({ ok:true });
 }
