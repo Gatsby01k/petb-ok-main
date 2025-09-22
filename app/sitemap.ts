@@ -1,15 +1,11 @@
+// app/sitemap.ts
 import type { MetadataRoute } from "next";
+import { headers } from "next/headers";
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || "https://bitcoinpetertodd.com";
-  const now = new Date().toISOString();
-
-  const routes: string[] = ["/", "/faq", "/terms", "/privacy"].filter(Boolean);
-
-  return routes.map((path) => ({
-    url: `${base}${path}`,
-    lastModified: now,
-    changeFrequency: "weekly",
-    priority: path === "/" ? 1 : 0.6,
-  }));
+export default function sitemap(): MetadataRoute.Sitemap {
+  const h = headers();
+  const host = h.get("x-forwarded-host") || h.get("host") || "www.bitcoinpetertodd.com";
+  const proto = h.get("x-forwarded-proto") || "https";
+  const base = `${proto}://${host}`;
+  return [{ url: `${base}/`, lastModified: new Date(), changeFrequency: "weekly", priority: 1 }];
 }
