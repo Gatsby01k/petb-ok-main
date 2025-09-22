@@ -12,9 +12,11 @@ import {
   Facebook,
   Linkedin,
   Instagram,
-  Send, // для Telegram
+  Send,
   Mail,
 } from "lucide-react";
+// ➕ SEO JSON-LD
+import { OrganizationJsonLd, ServiceJsonLd, FaqJsonLd } from "@/components/SeoJsonLd";
 
 /* =========================
    BRAND
@@ -678,37 +680,41 @@ const Apply = () => {
   );
 };
 
-const FAQ = () => (
-  <section id="faq" className="relative py-16 md:py-24 scroll-mt-24">
-    <div className="mx-auto max-w-5xl px-4 sm:px-6">
-      <div className="grid md:grid-cols-2 gap-6">
-        {[
-          {
-            q: "Is this a public offer?",
-            a: "No. Access is only through our whitelist with fixed allocations and on-chain confirmation.",
-          },
-          {
-            q: "What does on-chain recording mean?",
-            a: "Every contribution is written to the blockchain and permanently verifiable.",
-          },
-          {
-            q: "How is rev-share distributed?",
-            a: "Revenue share is paid automatically under DAO rules based on token balances.",
-          },
-          {
-            q: "Can I exit?",
-            a: "Yes. After the lock-up, allocations can be transferred or traded on supported markets.",
-          },
-        ].map((item, i) => (
-          <FrameCard key={i}>
-            <h3 className="text-lg font-bold text-white">{item.q}</h3>
-            <p className="mt-2 text-white/85">{item.a}</p>
-          </FrameCard>
-        ))}
+const FAQ = () => {
+  const faqs = [
+    {
+      q: "Is this a public offer?",
+      a: "No. Access is only through our whitelist with fixed allocations and on-chain confirmation.",
+    },
+    {
+      q: "What does on-chain recording mean?",
+      a: "Every contribution is written to the blockchain and permanently verifiable.",
+    },
+    {
+      q: "How is rev-share distributed?",
+      a: "Revenue share is paid automatically under DAO rules based on token balances.",
+    },
+    {
+      q: "Can I exit?",
+      a: "Yes. After the lock-up, allocations can be transferred or traded on supported markets.",
+    },
+  ] as const;
+
+  return (
+    <section id="faq" className="relative py-16 md:py-24 scroll-mt-24">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6">
+        <div className="grid md:grid-cols-2 gap-6">
+          {faqs.map((item, i) => (
+            <FrameCard key={i}>
+              <h3 className="text-lg font-bold text-white">{item.q}</h3>
+              <p className="mt-2 text-white/85">{item.a}</p>
+            </FrameCard>
+          ))}
+        </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 const Footer = () => {
   const [modal, setModal] = React.useState<null | "terms" | "privacy" | "imprint">(null);
@@ -754,8 +760,37 @@ const Footer = () => {
 };
 
 export default function Page(): JSX.Element {
+  // FAQ JSON-LD (синхронизация с блоком FAQ)
+  const faqItems = [
+    {
+      question: "Is this a public offer?",
+      answer:
+        "No. Access is only through our whitelist with fixed allocations and on-chain confirmation.",
+    },
+    {
+      question: "What does on-chain recording mean?",
+      answer:
+        "Every contribution is written to the blockchain and permanently verifiable.",
+    },
+    {
+      question: "How is rev-share distributed?",
+      answer:
+        "Revenue share is paid automatically under DAO rules based on token balances.",
+    },
+    {
+      question: "Can I exit?",
+      answer:
+        "Yes. After the lock-up, allocations can be transferred or traded on supported markets.",
+    },
+  ];
+
   return (
     <div className="min-h-screen body-bg text-white relative overflow-x-hidden">
+      {/* JSON-LD для rich results */}
+      <OrganizationJsonLd />
+      <ServiceJsonLd />
+      <FaqJsonLd items={faqItems} />
+
       <Background />
       <Nav />
       <Hero />
