@@ -235,7 +235,7 @@ const SocialLinks = () => {
     { href: "https://x.com/Peter_Todd_BTC", label: "X (Twitter)", custom: <XMark /> },
     { href: "https://www.facebook.com/PeterToddBitcoin", label: "Facebook", icon: Facebook },
     { href: "https://www.linkedin.com/company/peter-todd-bitcoin/", label: "LinkedIn", icon: Linkedin },
-    { href: "https://www.instagram.com/bitcoinpetertodd/", label: "Instagram", icon: Instagram },
+    { href: "https://www.instagram.com/petertoddbitcoin/", label: "Instagram", icon: Instagram },
     { href: "https://t.me/PeterTodd_Bitcoin", label: "Telegram", icon: Send },
   ] as const;
 
@@ -382,7 +382,7 @@ function Hero(): JSX.Element {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-16 sm:pt-24 md:pt-28 pb-16 sm:pb-24 text-center">
 
         <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] sm:text-xs text-white/80 mb-5 sm:mb-6">
-          <Sparkles className="h-3.5 w-3.5" aria-hidden /> Awwwards-style concept
+          <Sparkles className="h-3.5 w-3.5" aria-hidden /> PETBitcoin
         </div>
 
         <motion.h1 id="heroTitle" style={prefersReducedMotion ? undefined : { y: yTitleSpring }} className="hero-title">
@@ -747,7 +747,7 @@ const Footer = () => {
           Contact: <a href="mailto:info@bitcoinpetertodd.com" className="text-yellow-300">info@bitcoinpetertodd.com</a><br/>
           Investors: <a href="mailto:invest@bitcoinpetertodd.com" className="text-yellow-300">invest@bitcoinpetertodd.com</a>
         </p>
-        <p>Telegram: <a href="https://t.me/PeterTodd_Bitcoin" target="_blank" className="text-yellow-300" rel="noreferrer">t.me/PeterTodd_Bitcoin</a></p>
+        <p>Linkedin: <a href="https://www.linkedin.com/company/peter-todd-bitcoin" target="_blank" className="text-yellow-300" rel="noreferrer">https://www.linkedin.com/company/peter-todd-bitcoin</a></p>
       </Modal>
     </footer>
   );
