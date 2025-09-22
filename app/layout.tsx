@@ -1,7 +1,7 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
-import { site } from "@/lib/seo"; // из SEO-пакета
+import { site } from "../lib/seo"; // из SEO-пакета
 // import GA from "@/components/GA"; // опционально (Google Analytics)
 
 export const viewport: Viewport = {
