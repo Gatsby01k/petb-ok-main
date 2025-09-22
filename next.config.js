@@ -1,4 +1,18 @@
 /** @type {import('next').NextConfig} */
-module.exports = {
-  reactStrictMode: true
-};
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
+module.exports = withBundleAnalyzer({
+  reactStrictMode: true,
+  poweredByHeader: false,
+  swcMinify: true,
+  images: {
+    formats: ["image/avif", "image/webp"],
+    domains: [],
+  },
+  experimental: {
+    optimizeCss: true,
+    optimizePackageImports: ["lucide-react"],
+  },
+});
