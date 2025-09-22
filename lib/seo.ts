@@ -1,13 +1,17 @@
+// lib/seo.ts
 export const site = {
-  url: process.env.NEXT_PUBLIC_SITE_URL || "https://bitcoinpetertodd.com/",
-  title: "The Future of Bitcoin — Transparent, Strategic, On-Chain",
+  url: "https://www.bitcoinpetertodd.com", // используем www, как в проде
+  title: "Peter Todd Bitcoin",
   description:
-    "Whitelist application for strategic Bitcoin supporters led by Peter Todd. Transparent tiers, on-chain guarantees, and early-partner access.",
+    "Next-generation Bitcoin initiative with on-chain transparency, DAO governance and a private whitelist for strategic supporters.",
   themeColor: "#f2c14e",
-  twitterHandle: "@peter_todd_btc", // поправь при необходимости
+  twitterHandle: "@Peter_Todd_BTC",
   contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@bitcoinpetertodd.com",
   sameAs: [
-    "https://twitter.com/peter_todd_btc",
+    "https://x.com/Peter_Todd_BTC",
+    "https://www.facebook.com/PeterToddBitcoin",
     "https://www.linkedin.com/company/peter-todd-bitcoin/",
+    "https://www.instagram.com/petertoddbitcoin/",
+    "https://t.me/PeterTodd_Bitcoin",
   ],
 } as const;
