@@ -727,9 +727,9 @@ const Footer = () => {
           <WordmarkBP />
         </a>
         <div className="flex items-center gap-6">
-          <button onClick={() => setModal("terms")} className="hover:text-white transition">Terms</button>
-          <button onClick={() => setModal("privacy")} className="hover:text-white transition">Privacy</button>
-          <button onClick={() => setModal("imprint")} className="hover:text-white transition">Imprint</button>
+          <a href="/terms" className="hover:text-white transition">Terms</a>
+          <a href="/privacy" className="hover:text-white transition">Privacy</a>
+          <a href="/imprint" className="hover:text-white transition">Imprint</a>
           <span className="text-white/60">© {new Date().getFullYear()}</span>
         </div>
       </div>
