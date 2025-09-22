@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Background, Nav, Footer, FrameCard } from "../../components/SiteChrome";
+import { PageShell, FrameCard } from "../../components/SiteChrome";
 
 export const metadata: Metadata = { title: "FAQ • Bitcoin Peter Todd" };
 
@@ -12,10 +12,8 @@ const faqs = [
 
 export default function FAQPage() {
   return (
-    <div className="min-h-screen body-bg text-white relative overflow-x-hidden">
-      <Background />
-      <Nav />
-      <main id="content" className="mx-auto max-w-5xl px-4 sm:px-6 py-16">
+    <PageShell>
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-16">
         <h1 className="text-3xl font-extrabold">FAQ</h1>
         <div className="mt-8 grid md:grid-cols-2 gap-6">
           {faqs.map((i, idx) => (
@@ -25,8 +23,7 @@ export default function FAQPage() {
             </FrameCard>
           ))}
         </div>
-      </main>
-      <Footer />
-    </div>
+      </div>
+    </PageShell>
   );
 }
