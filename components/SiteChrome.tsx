@@ -100,3 +100,14 @@ export function Footer() {
     </footer>
   );
 }
+// В САМОМ НИЗУ файла
+export function PageShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative min-h-dvh flex flex-col body-bg text-white overflow-x-hidden">
+      <Background />
+      <Nav />
+      <main id="content" className="flex-1">{children}</main>
+      <Footer />
+    </div>
+  );
+}
