@@ -16,7 +16,7 @@ import {
   Mail,
 } from "lucide-react";
 // ➕ SEO JSON-LD
-import { OrganizationJsonLd, ServiceJsonLd, FaqJsonLd } from "@/components/SeoJsonLd";
+import { OrganizationJsonLd, ServiceJsonLd, FaqJsonLd } from "../components/SeoJsonLd";
 
 /* =========================
    BRAND
