@@ -1,5 +1,5 @@
 import React from "react";
-import { site } from "@/lib/seo";
+import { site } from "../lib/seo";
 
 type Props = { data: object };
 
