@@ -14,6 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/privacy",
     "/imprint",
     "/faq",
+    "/proof",
   ];
 
   return routes.map((path) => ({
