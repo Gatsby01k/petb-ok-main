@@ -361,6 +361,8 @@ const Nav = () => (
         <a href="#tiers" className="hover:text-white transition">Tiers</a>
         <a href="#onchain" className="hover:text-white transition">On-chain</a>
         <a href="#faq" className="hover:text-white transition">FAQ</a>
+        {/* NEW: Proof link */}
+        <a href="/proof" className="hover:text-white transition">Proof</a>
         <a href="#apply" className="hover:text-white transition inline-flex items-center gap-2">
           Apply <ArrowRight className="h-4 w-4" />
         </a>
@@ -730,6 +732,8 @@ const Footer = () => {
           <a href="/terms" className="hover:text-white transition">Terms</a>
           <a href="/privacy" className="hover:text-white transition">Privacy</a>
           <a href="/imprint" className="hover:text-white transition">Imprint</a>
+          {/* NEW: Proof link */}
+          <a href="/proof" className="hover:text-white transition">Proof</a>
           <span className="text-white/60">© {new Date().getFullYear()}</span>
         </div>
       </div>
